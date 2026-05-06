@@ -631,9 +631,20 @@ async function copyImageClip(clip) {
 }
 
 async function readClipboard() {
-  if (!navigator.clipboard?.readText) {
+  if (!navigator.clipboard?.read && !navigator.clipboard?.readText) {
     setStatus("This browser does not support clipboard reads.");
     elements.permissionPill.textContent = "Unavailable";
+    return;
+  }
+
+  const imageRead = await readImageFromClipboard();
+  if (imageRead) {
+    return;
+  }
+
+  if (!navigator.clipboard?.readText) {
+    setStatus("Image clipboard read is blocked here. Click the capture box and paste instead.");
+    elements.permissionPill.textContent = "Paste instead";
     return;
   }
 
@@ -646,6 +657,33 @@ async function readClipboard() {
     elements.permissionPill.textContent = "Needs permission";
     setStatus("Clipboard read was blocked. Use paste in the capture box instead.");
   }
+}
+
+async function readImageFromClipboard() {
+  if (!navigator.clipboard?.read) {
+    return false;
+  }
+
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      const imageType = item.types.find((type) => type.startsWith("image/"));
+      if (!imageType) {
+        continue;
+      }
+      const blob = await item.getType(imageType);
+      const file = new File([blob], "clipboard-image", { type: blob.type || imageType });
+      const imageData = await imageFileToClipData(file);
+      await addImageClip(imageData, "Clipboard image");
+      elements.permissionPill.textContent = "Image allowed";
+      elements.clipInput.value = "";
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
 }
 
 async function captureScreenshot() {
