@@ -46,7 +46,8 @@ service cloud.firestore {
     }
 
     match /publicShares/{code} {
-      allow get: if resource.data.expiresAt is timestamp && resource.data.expiresAt > request.time;
+      allow get: if !exists(/databases/$(database)/documents/publicShares/$(code))
+        || (resource.data.expiresAt is timestamp && resource.data.expiresAt > request.time);
       allow list: if false;
       allow create: if validShareWrite(code);
       allow update: if resource.data.expiresAt is timestamp
