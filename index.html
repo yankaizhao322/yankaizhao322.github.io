@@ -1,12 +1,741 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Yankai Zhao</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yankai Zhao | AI/ML Research</title>
+  <meta name="description" content="Yankai Zhao is a Computer Engineering graduate student at Lehigh University working on AI/ML, quantitative research, risk modeling, financial forecasting, healthcare time series, and human-centered AI tools.">
+  <meta name="author" content="Yankai Zhao">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://yankaizhao.vercel.app/">
+  <meta property="og:title" content="Yankai Zhao | AI/ML Research">
+  <meta property="og:description" content="AI/ML and quantitative research portfolio: credit risk, financial forecasting, healthcare time series, reinforcement learning, and Type Chinese Online.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yankaizhao.vercel.app/">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Yankai Zhao",
+      "url": "https://yankaizhao.vercel.app/",
+      "email": "mailto:zhaoyankai18514473503@gmail.com",
+      "sameAs": [
+        "https://github.com/yankaizhao322",
+        "https://yankaizhao322.github.io/Type-Chinese-Online/"
+      ],
+      "affiliation": {
+        "@type": "CollegeOrUniversity",
+        "name": "Lehigh University"
+      },
+      "knowsAbout": [
+        "Machine Learning",
+        "Quantitative Research",
+        "Credit Risk Modeling",
+        "Financial Forecasting",
+        "Healthcare Time Series",
+        "Human-centered AI"
+      ]
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #151b1a;
+      --muted: #5f6d69;
+      --line: #d8e1de;
+      --paper: #f7faf8;
+      --panel: #ffffff;
+      --accent: #087b73;
+      --accent-2: #a73527;
+      --soft: #eaf4f2;
+      --warm: #fff7e8;
+      --shadow: 0 18px 48px rgba(20, 31, 29, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(8, 123, 115, 0.08), rgba(247, 250, 248, 0) 360px),
+        var(--paper);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    .site {
+      width: min(1160px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 46px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      padding-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #cfe1dd;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--accent);
+      font-weight: 900;
+      box-shadow: 0 10px 28px rgba(17, 48, 44, 0.08);
+    }
+
+    .name {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.1;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .role {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .nav a {
+      color: #293331;
+      text-decoration: none;
+    }
+
+    .nav a:hover {
+      color: var(--accent);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+      gap: 22px;
+      align-items: stretch;
+      padding: 22px 0 28px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-copy {
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      min-height: 360px;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      margin: 0;
+      border: 1px solid #cdded9;
+      border-radius: 999px;
+      background: #fff;
+      color: #37504b;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 800px;
+      font-size: clamp(38px, 6vw, 72px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 720px;
+      color: #2d3835;
+      line-height: 1.7;
+      font-size: 17px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid #b9cbc6;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 14px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(8, 123, 115, 0.18);
+    }
+
+    .signal-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      box-shadow: var(--shadow);
+    }
+
+    .signal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .signal-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      padding: 16px;
+    }
+
+    .cell {
+      min-height: 44px;
+      border: 1px solid #d8e4e0;
+      border-radius: 7px;
+      background: #fff;
+      animation: lift 5.4s ease-in-out infinite;
+    }
+
+    .cell:nth-child(3n) { background: var(--soft); animation-delay: 0.4s; }
+    .cell:nth-child(4n) { background: var(--warm); animation-delay: 0.9s; }
+    .cell:nth-child(7n) { border-color: rgba(8, 123, 115, 0.45); animation-delay: 1.4s; }
+
+    @keyframes lift {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .signal-note {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      border: 1px solid #d3dfdc;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    .signal-note strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .signal-note p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 30px;
+      align-items: start;
+      padding-top: 28px;
+    }
+
+    .profile {
+      position: sticky;
+      top: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .portrait {
+      width: 116px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--accent);
+      font-size: 42px;
+      font-weight: 900;
+      box-shadow: 0 12px 28px rgba(17, 48, 44, 0.08);
+    }
+
+    .profile p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .links {
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .section {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section:first-child {
+      padding-top: 0;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .section-text {
+      margin: 0;
+      max-width: 780px;
+      line-height: 1.7;
+      color: #303b38;
+      font-size: 15px;
+    }
+
+    .bio-text {
+      margin: 0;
+      max-width: 860px;
+      color: #26312f;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .bio-facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .bio-fact {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .bio-fact span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .bio-fact strong {
+      display: block;
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .news {
+      display: grid;
+      gap: 9px;
+    }
+
+    .news-item {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+      font-size: 14px;
+    }
+
+    .date {
+      color: var(--accent-2);
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .project {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-height: 185px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 16px;
+      box-shadow: 0 10px 26px rgba(21, 27, 26, 0.06);
+    }
+
+    .project.featured {
+      border-color: rgba(8, 123, 115, 0.4);
+      background: linear-gradient(180deg, #ffffff, #f3fbf9);
+    }
+
+    .project p {
+      margin: 0;
+      color: #303b38;
+      line-height: 1.58;
+      font-size: 14px;
+    }
+
+    .meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      border: 1px solid #cfdcd8;
+      border-radius: 999px;
+      background: var(--soft);
+      color: #26413d;
+      padding: 5px 9px;
+      font-size: 13px;
+    }
+
+    .project-link {
+      display: inline-flex;
+      width: fit-content;
+      margin-top: 4px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .plain-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .plain-list li {
+      color: #303b38;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    footer {
+      padding-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 850px) {
+      .hero,
+      .layout,
+      .grid,
+      .split,
+      .bio-facts {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy,
+      .signal-card {
+        min-height: auto;
+      }
+
+      .signal-card {
+        min-height: 300px;
+      }
+
+      .profile {
+        position: static;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .topbar {
+        display: grid;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .signal-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>欢迎来到 Yankai Zhao 的个人主页！</h1>
-  <p>你好，这里是我的个人网站。</p>
-  <p>邮箱：zhaoyankai322@gmail.com</p>
+  <main class="site">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">YZ</div>
+        <div>
+          <p class="name">Yankai Zhao</p>
+          <p class="role">AI/ML · quantitative research · Lehigh University</p>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Primary">
+        <a href="#research">Research</a>
+        <a href="#projects">Projects</a>
+        <a href="#education">Education</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </header>
+
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">Computer Engineering graduate student</p>
+        <h1>Machine learning for risk, markets, movement, and useful interfaces.</h1>
+        <p class="lead">
+          I am a Computer Engineering M.E. student at Lehigh University working across AI/ML,
+          quantitative modeling, healthcare time series, and human-centered tools. I like projects
+          that turn noisy data into decisions people can actually use.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#projects">View Projects</a>
+          <a class="button" href="https://yankaizhao322.github.io/Type-Chinese-Online/">Type Chinese Online</a>
+          <a class="button" href="mailto:zhaoyankai18514473503@gmail.com">Email</a>
+        </div>
+      </div>
+      <div class="signal-card" aria-label="Research signal visualization">
+        <div class="signal-top">
+          <span>research signals</span>
+          <span>ML / finance / health / tools</span>
+        </div>
+        <div class="signal-grid" aria-hidden="true">
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+        <div class="signal-note">
+          <strong>Recent focus</strong>
+          <p>Predictive modeling, model interpretation, sequence learning, and lightweight AI products in the browser.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="profile">
+        <div class="portrait" aria-hidden="true">YZ</div>
+        <p>
+          I build applied ML systems for messy, decision-heavy domains: credit risk, market signals,
+          healthcare movement data, and language tools. I care about models that are accurate,
+          explainable, and usable outside a notebook.
+        </p>
+        <div class="links" id="contact">
+          <a href="mailto:zhaoyankai18514473503@gmail.com">zhaoyankai18514473503@gmail.com</a>
+          <a href="https://github.com/yankaizhao322">GitHub: yankaizhao322</a>
+          <a href="https://yankaizhao322.github.io/Type-Chinese-Online/">Type Chinese Online</a>
+        </div>
+      </aside>
+
+      <div>
+        <section class="section" id="bio">
+          <h2>Bio</h2>
+          <p class="bio-text">
+            I am Yankai Zhao, a Computer Engineering master's student at Lehigh University focused on
+            machine learning, quantitative research, and AI products. My work spans credit default
+            prediction, financial forecasting with sentiment and sequence models, healthcare movement
+            classification, reinforcement learning, and browser-based language tools. I am especially
+            interested in turning noisy real-world data into systems that people can interpret, trust,
+            and actually use.
+          </p>
+          <div class="bio-facts">
+            <div class="bio-fact"><span>Focus</span><strong>Applied ML, data science, quantitative modeling</strong></div>
+            <div class="bio-fact"><span>Current</span><strong>M.E. Computer Engineering, Lehigh University</strong></div>
+            <div class="bio-fact"><span>Building</span><strong>Type Chinese Online and lightweight AI tools</strong></div>
+          </div>
+        </section>
+
+        <section class="section" id="news">
+          <h2>News</h2>
+          <div class="news">
+            <div class="news-item"><span class="date">2026</span><span>Expected M.E. in Computer Engineering from Lehigh University.</span></div>
+            <div class="news-item"><span class="date">2026</span><span>Built Type Chinese Online, a browser-based Chinese input and translation tool.</span></div>
+            <div class="news-item"><span class="date">Recent</span><span>Exploring interpretable credit risk models and LLM-assisted financial signal analysis.</span></div>
+          </div>
+        </section>
+
+        <section class="section" id="research">
+          <h2>Research Interests</h2>
+          <p class="section-text">
+            My interests sit at the intersection of machine learning systems, decision modeling, and
+            practical AI products. I am especially interested in risk-aware models, explainable prediction,
+            multimodal time-series analysis, and tools that make language or data workflows easier.
+          </p>
+          <div class="tags">
+            <span class="tag">Machine learning</span>
+            <span class="tag">Risk modeling</span>
+            <span class="tag">Financial AI</span>
+            <span class="tag">Healthcare time series</span>
+            <span class="tag">Model interpretation</span>
+            <span class="tag">Human-centered AI</span>
+            <span class="tag">Reinforcement learning</span>
+          </div>
+        </section>
+
+        <section class="section" id="projects">
+          <h2>Selected Projects</h2>
+          <div class="grid">
+            <article class="project featured">
+              <h3>Type Chinese Online</h3>
+              <p>
+                A browser-based Chinese input tool with pinyin candidates, partial-input prediction,
+                context suggestions, voice input, and Chinese-English translation support.
+              </p>
+              <a class="project-link" href="https://yankaizhao322.github.io/Type-Chinese-Online/">Open project</a>
+            </article>
+
+            <article class="project">
+              <h3>Credit Default Prediction using XGBoost</h3>
+              <p>
+                Built and compared XGBoost and TabNet models for credit decisioning, threshold optimization,
+                behavioral segmentation, and SHAP-based risk interpretation.
+              </p>
+              <p class="meta">XGBoost · TabNet · SHAP · credit risk · 30+ DPD transitions</p>
+            </article>
+
+            <article class="project">
+              <h3>Stock Price Prediction using LLM and GAN Models</h3>
+              <p>
+                Developed a signal-engineering pipeline for TSLA next-day price movement analysis using
+                Yahoo Finance data, Twitter sentiment features, GAN sequence modeling, and Qwen2-7B explanations.
+              </p>
+              <p class="meta">LSTM · CNN discriminator · VADER · Qwen2-7B · financial forecasting</p>
+            </article>
+
+            <article class="project">
+              <h3>Parkinson's Disease Severity Classification</h3>
+              <p>
+                Designed a multimodal sit-to-stand movement pipeline using computer vision, IMU signals,
+                Transformer encoders, and VAE-based class balancing.
+              </p>
+              <p class="meta">Transformer · VAE · IMU · computer vision · 94% accuracy noted in resume</p>
+            </article>
+
+            <article class="project">
+              <h3>Deep Reinforcement Learning Agent for MiniChess</h3>
+              <p>
+                Built a Deep Q-Learning agent with a CNN policy for 5x5 MiniChess and a reward design
+                aimed at faster wins and less defensive play.
+              </p>
+              <p class="meta">Deep Q-Learning · CNN · 625-action space</p>
+            </article>
+
+            <article class="project">
+              <h3>Pixel Character Generator with Conditional DCGAN</h3>
+              <p>
+                Prototyped a Java/MySQL backend and interactive Conditional DCGAN workflow for 16x16 sprite
+                generation across character and item categories.
+              </p>
+              <p class="meta">Conditional DCGAN · Java · MySQL · HTML/JS</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="education">
+          <h2>Education & Skills</h2>
+          <div class="split">
+            <div>
+              <h3>Lehigh University</h3>
+              <p class="section-text">M.E. in Computer Engineering, expected May 2026.</p>
+              <p class="meta">
+                Coursework includes Machine Learning, Statistical Decision Making, Deep & Generative Learning,
+                Data Mining, Reinforcement Learning, Advanced Algorithms, Cloud Services, and Database Theory.
+              </p>
+            </div>
+            <div>
+              <h3>Technical Stack</h3>
+              <ul class="plain-list">
+                <li>Python, PyTorch, SQL, Java, C/C++</li>
+                <li>XGBoost, Random Forest, Logistic Regression, Transformers, CNN/RNN/GAN</li>
+                <li>AWS, Kubernetes, RESTful APIs, data pipelines</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <footer>
+          Last updated 2026 · Built with plain HTML/CSS and hosted on GitHub Pages.
+        </footer>
+      </div>
+    </div>
+  </main>
 </body>
 </html>
