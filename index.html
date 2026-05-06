@@ -7,17 +7,17 @@
   <meta name="description" content="Yankai Zhao is a Computer Engineering graduate student at Lehigh University working on AI/ML, quantitative research, risk modeling, financial forecasting, healthcare time series, and human-centered AI tools.">
   <meta name="author" content="Yankai Zhao">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://yankaizhao.vercel.app/">
+  <link rel="canonical" href="https://yankaizhao322.github.io/yaz624/">
   <meta property="og:title" content="Yankai Zhao | AI/ML Research">
   <meta property="og:description" content="AI/ML and quantitative research portfolio: credit risk, financial forecasting, healthcare time series, reinforcement learning, and Easy Input Tool.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://yankaizhao.vercel.app/">
+  <meta property="og:url" content="https://yankaizhao322.github.io/yaz624/">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Person",
       "name": "Yankai Zhao",
-      "url": "https://yankaizhao.vercel.app/",
+      "url": "https://yankaizhao322.github.io/yaz624/",
       "email": "mailto:zhaoyankai18514473503@gmail.com",
       "sameAs": [
         "https://github.com/yankaizhao322",
@@ -41,16 +41,16 @@
   <style>
     :root {
       color-scheme: light;
-      --ink: #151b1a;
-      --muted: #5f6d69;
-      --line: #d8e1de;
-      --paper: #f7faf8;
+      --ink: #1a2130;
+      --muted: #5d6878;
+      --line: #dce2ef;
+      --paper: #f3f6ff;
       --panel: #ffffff;
-      --accent: #087b73;
-      --accent-2: #a73527;
-      --soft: #eaf4f2;
-      --warm: #fff7e8;
-      --shadow: 0 18px 48px rgba(20, 31, 29, 0.11);
+      --accent: #2158ff;
+      --accent-2: #9230d6;
+      --soft: #edf2ff;
+      --warm: #f6edff;
+      --shadow: 0 24px 56px rgba(27, 42, 90, 0.12);
     }
 
     * { box-sizing: border-box; }
@@ -65,7 +65,8 @@
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       color: var(--ink);
       background:
-        linear-gradient(180deg, rgba(8, 123, 115, 0.08), rgba(247, 250, 248, 0) 360px),
+        radial-gradient(circle at 10% 0%, rgba(33, 88, 255, 0.18), transparent 32%),
+        radial-gradient(circle at 90% 0%, rgba(146, 48, 214, 0.14), transparent 34%),
         var(--paper);
     }
 
@@ -101,12 +102,12 @@
       height: 42px;
       display: grid;
       place-items: center;
-      border: 1px solid #cfe1dd;
-      border-radius: 8px;
+      border: 1px solid #cfd8f3;
+      border-radius: 12px;
       background: #fff;
       color: var(--accent);
       font-weight: 900;
-      box-shadow: 0 10px 28px rgba(17, 48, 44, 0.08);
+      box-shadow: 0 14px 30px rgba(30, 62, 154, 0.14);
     }
 
     .name {
@@ -147,8 +148,8 @@
       gap: 22px;
       align-items: stretch;
       padding: 22px 0 28px;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
+      border-top: 1px solid #d7def0;
+      border-bottom: 1px solid #d7def0;
     }
 
     .hero-copy {
@@ -161,10 +162,10 @@
     .eyebrow {
       width: fit-content;
       margin: 0;
-      border: 1px solid #cdded9;
+      border: 1px solid #ccd6f5;
       border-radius: 999px;
       background: #fff;
-      color: #37504b;
+      color: #2b3f86;
       padding: 6px 10px;
       font-size: 13px;
       font-weight: 750;
@@ -198,8 +199,8 @@
       align-items: center;
       justify-content: center;
       min-height: 42px;
-      border: 1px solid #b9cbc6;
-      border-radius: 8px;
+      border: 1px solid #c7d2f2;
+      border-radius: 10px;
       background: #fff;
       color: var(--ink);
       padding: 0 14px;
@@ -212,16 +213,16 @@
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
-      box-shadow: 0 10px 22px rgba(8, 123, 115, 0.18);
+      box-shadow: 0 14px 28px rgba(33, 88, 255, 0.3);
     }
 
     .signal-card {
       position: relative;
       overflow: hidden;
       min-height: 360px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfdfc;
+      border: 1px solid #d2dbf3;
+      border-radius: 16px;
+      background: linear-gradient(160deg, #f9fbff 0%, #f3f0ff 100%);
       box-shadow: var(--shadow);
     }
 
@@ -231,7 +232,7 @@
       align-items: center;
       gap: 12px;
       padding: 14px;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid #d8e0f3;
       color: var(--muted);
       font-size: 13px;
       font-weight: 750;
@@ -246,15 +247,15 @@
 
     .cell {
       min-height: 44px;
-      border: 1px solid #d8e4e0;
-      border-radius: 7px;
+      border: 1px solid #d6dff6;
+      border-radius: 10px;
       background: #fff;
       animation: lift 5.4s ease-in-out infinite;
     }
 
     .cell:nth-child(3n) { background: var(--soft); animation-delay: 0.4s; }
     .cell:nth-child(4n) { background: var(--warm); animation-delay: 0.9s; }
-    .cell:nth-child(7n) { border-color: rgba(8, 123, 115, 0.45); animation-delay: 1.4s; }
+    .cell:nth-child(7n) { border-color: rgba(33, 88, 255, 0.5); animation-delay: 1.4s; }
 
     @keyframes lift {
       0%, 100% { transform: translateY(0); }
@@ -266,8 +267,8 @@
       left: 16px;
       right: 16px;
       bottom: 16px;
-      border: 1px solid #d3dfdc;
-      border-radius: 8px;
+      border: 1px solid #d4ddf5;
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.92);
       padding: 14px;
       backdrop-filter: blur(8px);
@@ -306,13 +307,13 @@
       aspect-ratio: 1;
       display: grid;
       place-items: center;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      border: 1px solid #d2dbf0;
+      border-radius: 14px;
       background: var(--panel);
       color: var(--accent);
       font-size: 42px;
       font-weight: 900;
-      box-shadow: 0 12px 28px rgba(17, 48, 44, 0.08);
+      box-shadow: 0 16px 36px rgba(33, 88, 255, 0.16);
     }
 
     .profile p {
@@ -426,16 +427,16 @@
       align-content: start;
       gap: 8px;
       min-height: 185px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      border: 1px solid #d7def2;
+      border-radius: 14px;
       background: var(--panel);
       padding: 16px;
-      box-shadow: 0 10px 26px rgba(21, 27, 26, 0.06);
+      box-shadow: 0 12px 28px rgba(20, 42, 103, 0.08);
     }
 
     .project.featured {
-      border-color: rgba(8, 123, 115, 0.4);
-      background: linear-gradient(180deg, #ffffff, #f3fbf9);
+      border-color: rgba(33, 88, 255, 0.35);
+      background: linear-gradient(180deg, #ffffff, #f2f6ff);
     }
 
     .project p {
@@ -456,12 +457,13 @@
       display: inline-block;
       width: fit-content;
       margin-top: 6px;
-      border: 1px solid #cfdcd8;
+      border: 1px solid #c8d5fb;
       border-radius: 999px;
-      background: #eef7f5;
-      color: #23403b;
-      padding: 4px 10px;
-      font-weight: 700;
+      background: #e9efff;
+      color: #1d3ca5;
+      padding: 5px 11px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
     }
 
     .tags {
@@ -472,10 +474,10 @@
     }
 
     .tag {
-      border: 1px solid #cfdcd8;
+      border: 1px solid #cdd8f4;
       border-radius: 999px;
       background: var(--soft);
-      color: #26413d;
+      color: #2f427c;
       padding: 5px 9px;
       font-size: 13px;
     }
