@@ -58,6 +58,9 @@ const elements = {
   passwordInput: document.querySelector("#passwordInput"),
   signInButton: document.querySelector("#signInButton"),
   createAccountButton: document.querySelector("#createAccountButton"),
+  forgotPasswordButton: document.querySelector("#forgotPasswordButton"),
+  verifyEmailButton: document.querySelector("#verifyEmailButton"),
+  refreshUserButton: document.querySelector("#refreshUserButton"),
   signOutButton: document.querySelector("#signOutButton"),
   syncPill: document.querySelector("#syncPill"),
   accountLine: document.querySelector("#accountLine"),
@@ -161,7 +164,7 @@ function rebuildIndex() {
 }
 
 function remoteCollection() {
-  if (!state.remote.user || !state.remote.db) {
+  if (!state.remote.user?.emailVerified || !state.remote.db) {
     return null;
   }
   return state.remote.db
@@ -288,6 +291,11 @@ async function handleAuthState(user) {
     return;
   }
 
+  if (!user.emailVerified) {
+    setAccountStatus(`Signed in as ${user.email}. Verify your email before remote sync turns on.`);
+    return;
+  }
+
   setAccountStatus("Loading remote clips...");
   try {
     const remoteClips = await fetchRemoteClips();
@@ -305,12 +313,18 @@ async function handleAuthState(user) {
 
 function updateAccountUi() {
   const signedIn = Boolean(state.remote.user);
+  const needsVerification = Boolean(state.remote.user && !state.remote.user.emailVerified);
   elements.signInButton.hidden = signedIn;
   elements.createAccountButton.hidden = signedIn;
+  elements.forgotPasswordButton.hidden = signedIn;
+  elements.verifyEmailButton.hidden = !needsVerification;
+  elements.refreshUserButton.hidden = !needsVerification;
   elements.signOutButton.hidden = !signedIn;
   elements.emailInput.disabled = signedIn || !state.remote.available;
   elements.passwordInput.disabled = signedIn || !state.remote.available;
-  elements.syncPill.textContent = signedIn ? "Synced" : (state.remote.available ? "Ready" : "Local only");
+  elements.syncPill.textContent = signedIn
+    ? (needsVerification ? "Verify email" : "Synced")
+    : (state.remote.available ? "Ready" : "Local only");
   if (!state.remote.available) {
     elements.accountLine.textContent = "Add Firebase config to enable free remote accounts. Local history still works.";
   }
@@ -394,6 +408,37 @@ async function addImageClip(imageData, title) {
     title,
     digest: await digestValue(`image:${imageData}`),
   });
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function authInputs() {
+  return {
+    email: elements.emailInput.value.trim(),
+    password: elements.passwordInput.value,
+  };
+}
+
+function authErrorMessage(error, action) {
+  const code = error?.code || "";
+  if (code === "auth/email-already-in-use") {
+    return "This email already has an account. Sign in or use Forgot Password.";
+  }
+  if (code === "auth/invalid-email") {
+    return "Use a real email address, like name@example.com.";
+  }
+  if (code === "auth/weak-password") {
+    return "Password is too weak. Use at least 6 characters.";
+  }
+  if (code === "auth/wrong-password" || code === "auth/invalid-credential" || code === "auth/user-not-found") {
+    return "Sign in failed. Check the email and password, or use Forgot Password.";
+  }
+  if (code === "auth/too-many-requests") {
+    return "Too many attempts. Wait a bit, then try again.";
+  }
+  return `${action} failed. Try again in a moment.`;
 }
 
 async function addClip(partial) {
@@ -953,6 +998,60 @@ async function dataUrlToBlob(dataUrl) {
   return response.blob();
 }
 
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result || "")), { once: true });
+    reader.addEventListener("error", reject, { once: true });
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve(image), { once: true });
+    image.addEventListener("error", reject, { once: true });
+    image.src = dataUrl;
+  });
+}
+
+async function imageFileToClipData(file) {
+  const original = await readFileAsDataUrl(file);
+  const image = await loadImage(original);
+  const settings = screenshotSettings();
+  const { width, height } = fitSize(image.naturalWidth || image.width, image.naturalHeight || image.height, settings.maxEdge);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", settings.quality);
+}
+
+async function handleCapturePaste(event) {
+  const items = [...(event.clipboardData?.items || [])];
+  const imageItem = items.find((item) => item.type.startsWith("image/"));
+  if (!imageItem) {
+    window.setTimeout(() => addTextClip(elements.clipInput.value), 0);
+    return;
+  }
+
+  const file = imageItem.getAsFile();
+  if (!file) {
+    return;
+  }
+
+  event.preventDefault();
+  try {
+    const imageData = await imageFileToClipData(file);
+    await addImageClip(imageData, "Pasted screenshot");
+    elements.permissionPill.textContent = "Paste image";
+    elements.clipInput.value = "";
+  } catch {
+    setStatus("Image paste failed. Try Screenshot or upload/export instead.");
+  }
+}
+
 function downloadImage(clip) {
   const link = document.createElement("a");
   link.href = clip.imageData;
@@ -1186,10 +1285,19 @@ elements.authForm.addEventListener("submit", async (event) => {
     setAccountStatus("Add Firebase config before signing in.");
     return;
   }
+  const { email, password } = authInputs();
+  if (!isValidEmail(email)) {
+    setAccountStatus("Use a real email address, like name@example.com.");
+    return;
+  }
+  if (password.length < 6) {
+    setAccountStatus("Password needs at least 6 characters.");
+    return;
+  }
   try {
-    await state.remote.auth.signInWithEmailAndPassword(elements.emailInput.value.trim(), elements.passwordInput.value);
-  } catch {
-    setAccountStatus("Sign in failed. Check the email and password.");
+    await state.remote.auth.signInWithEmailAndPassword(email, password);
+  } catch (error) {
+    setAccountStatus(authErrorMessage(error, "Sign in"));
   }
 });
 elements.createAccountButton.addEventListener("click", async () => {
@@ -1197,10 +1305,62 @@ elements.createAccountButton.addEventListener("click", async () => {
     setAccountStatus("Add Firebase config before creating accounts.");
     return;
   }
+  const { email, password } = authInputs();
+  if (!isValidEmail(email)) {
+    setAccountStatus("Use a real email address, like name@example.com.");
+    return;
+  }
+  if (password.length < 6) {
+    setAccountStatus("Password needs at least 6 characters.");
+    return;
+  }
   try {
-    await state.remote.auth.createUserWithEmailAndPassword(elements.emailInput.value.trim(), elements.passwordInput.value);
+    const credential = await state.remote.auth.createUserWithEmailAndPassword(email, password);
+    await credential.user.sendEmailVerification();
+    setAccountStatus(`Account created. Verification email sent to ${email}.`);
+  } catch (error) {
+    setAccountStatus(authErrorMessage(error, "Account creation"));
+  }
+});
+elements.forgotPasswordButton.addEventListener("click", async () => {
+  if (!state.remote.available) {
+    setAccountStatus("Add Firebase config before password reset.");
+    return;
+  }
+  const email = elements.emailInput.value.trim();
+  if (!isValidEmail(email)) {
+    setAccountStatus("Enter your email first, then use Forgot Password.");
+    return;
+  }
+  try {
+    await state.remote.auth.sendPasswordResetEmail(email);
+    setAccountStatus(`Password reset email sent to ${email}.`);
+  } catch (error) {
+    setAccountStatus(authErrorMessage(error, "Password reset"));
+  }
+});
+elements.verifyEmailButton.addEventListener("click", async () => {
+  const user = state.remote.auth?.currentUser;
+  if (!user) {
+    return;
+  }
+  try {
+    await user.sendEmailVerification();
+    setAccountStatus(`Verification email sent to ${user.email}.`);
+  } catch (error) {
+    setAccountStatus(authErrorMessage(error, "Email verification"));
+  }
+});
+elements.refreshUserButton.addEventListener("click", async () => {
+  const user = state.remote.auth?.currentUser;
+  if (!user) {
+    return;
+  }
+  try {
+    await user.reload();
+    await handleAuthState(state.remote.auth.currentUser);
   } catch {
-    setAccountStatus("Account creation failed. Use a valid email and 6+ character password.");
+    setAccountStatus("Could not refresh verification status. Try signing out and back in.");
   }
 });
 elements.signOutButton.addEventListener("click", async () => {
@@ -1256,8 +1416,6 @@ elements.filterSelect.addEventListener("change", (event) => {
   state.filter = event.target.value;
   render();
 });
-elements.clipInput.addEventListener("paste", () => {
-  window.setTimeout(() => addTextClip(elements.clipInput.value), 0);
-});
+elements.clipInput.addEventListener("paste", handleCapturePaste);
 
 render();
