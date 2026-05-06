@@ -1,9 +1,10 @@
-I'm Yankai Zhao  
+# Yankai Zhao Homepage
 
-languages = ['Python', 'JavaScript', 'C++']
+Static academic-style personal homepage.
 
-Email: zhaoyankai322@gmail.com
 
-Thanks for stopping by!
+The page links to the Type Chinese project:
+
+https://yankaizhao322.github.io/Type-Chinese-Online/
 
 
