@@ -70,6 +70,18 @@
           <button id="readClipboardButton" type="button">Read Clipboard</button>
           <button id="screenshotButton" type="button">Screenshot</button>
         </div>
+        <div class="code-transfer" aria-label="Code transfer">
+          <div>
+            <h3>Code transfer</h3>
+            <p>Generate a short code for the capture box or latest clip. Codes expire after 1 hour.</p>
+          </div>
+          <button id="shareCodeButton" type="button">Generate Code</button>
+          <p id="shareCodeLine" class="code-line">No code yet.</p>
+          <div class="retrieve-row">
+            <input id="retrieveCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code">
+            <button id="retrieveCodeButton" type="button">Retrieve</button>
+          </div>
+        </div>
         <div class="screenshot-settings" aria-label="Screenshot settings">
           <label for="screenshotPreset">Screenshot size</label>
           <select id="screenshotPreset">

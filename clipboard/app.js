@@ -4,6 +4,8 @@ const MAX_STORAGE_BYTES = 4 * 1024 * 1024;
 const REMOTE_LIMIT = 120;
 const MAX_REMOTE_CLIP_BYTES = 900 * 1024;
 const MAX_TAGS = 8;
+const SHARE_CODE_TTL_MS = 60 * 60 * 1000;
+const SHARE_CODE_RETRIES = 12;
 const SCREENSHOT_PRESETS = {
   fast: { maxEdge: 720, quality: 0.68 },
   balanced: { maxEdge: 1280, quality: 0.82 },
@@ -39,6 +41,10 @@ const elements = {
   saveTextButton: document.querySelector("#saveTextButton"),
   readClipboardButton: document.querySelector("#readClipboardButton"),
   screenshotButton: document.querySelector("#screenshotButton"),
+  shareCodeButton: document.querySelector("#shareCodeButton"),
+  shareCodeLine: document.querySelector("#shareCodeLine"),
+  retrieveCodeInput: document.querySelector("#retrieveCodeInput"),
+  retrieveCodeButton: document.querySelector("#retrieveCodeButton"),
   screenshotPreset: document.querySelector("#screenshotPreset"),
   screenshotMaxEdge: document.querySelector("#screenshotMaxEdge"),
   exportButton: document.querySelector("#exportButton"),
@@ -131,6 +137,21 @@ function parseTags(value) {
   return normalizeTags(String(value || "").split(","));
 }
 
+function cloneShareClip(clip) {
+  const kind = clip.kind === "image" ? "image" : "text";
+  return {
+    kind,
+    text: kind === "text" ? String(clip.text || "") : "",
+    imageData: kind === "image" ? String(clip.imageData || "") : "",
+    title: typeof clip.title === "string" ? clip.title : "",
+    folder: typeof clip.folder === "string" ? clip.folder : "",
+    tags: normalizeTags(clip.tags),
+    digest: typeof clip.digest === "string" ? clip.digest : fallbackDigest(kind === "image" ? clip.imageData : clip.text),
+    pinned: false,
+    createdAt: new Date().toISOString(),
+  };
+}
+
 function mergeClipLists(first, second) {
   const byDigest = new Map();
   for (const clip of [...first, ...second]) {
@@ -172,6 +193,13 @@ function remoteCollection() {
     .collection("users")
     .doc(state.remote.user.uid)
     .collection("clips");
+}
+
+function shareCollection() {
+  if (!state.remote.available || !state.remote.db) {
+    return null;
+  }
+  return state.remote.db.collection("publicShares");
 }
 
 async function fetchRemoteClips() {
@@ -482,6 +510,127 @@ function authErrorMessage(error, action) {
     return "Too many attempts. Wait a bit, then try again.";
   }
   return `${action} failed. Try again in a moment.`;
+}
+
+function makeShareCode() {
+  const array = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(array);
+  return String(array[0] % 1000000).padStart(6, "0");
+}
+
+function normalizeShareCode(value) {
+  return String(value || "").replace(/\D/g, "").slice(0, 6);
+}
+
+async function clipFromCaptureOrLatest() {
+  const text = elements.clipInput.value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+  if (text) {
+    return {
+      kind: "text",
+      text,
+      imageData: "",
+      title: "",
+      folder: "",
+      tags: [],
+      digest: await digestValue(`text:${text}`),
+      pinned: false,
+      createdAt: new Date().toISOString(),
+    };
+  }
+  return state.clips[0] ? cloneShareClip(state.clips[0]) : null;
+}
+
+async function generateShareCode() {
+  const collection = shareCollection();
+  if (!collection) {
+    setStatus("Code transfer needs Firebase config.");
+    return;
+  }
+
+  const clip = await clipFromCaptureOrLatest();
+  if (!clip) {
+    setStatus("Save or type something before generating a code.");
+    return;
+  }
+  if (estimatedClipBytes(clip) > MAX_REMOTE_CLIP_BYTES) {
+    setStatus("This clip is too large for code transfer.");
+    return;
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + SHARE_CODE_TTL_MS);
+  for (let attempt = 0; attempt < SHARE_CODE_RETRIES; attempt += 1) {
+    const code = makeShareCode();
+    const ref = collection.doc(code);
+    try {
+      const saved = await state.remote.db.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(ref);
+        if (snapshot.exists) {
+          const existingExpiry = snapshot.data()?.expiresAt?.toDate?.();
+          if (!existingExpiry || existingExpiry > now) {
+            return false;
+          }
+        }
+        transaction.set(ref, {
+          code,
+          clip,
+          createdAt: globalThis.firebase.firestore.Timestamp.fromDate(now),
+          expiresAt: globalThis.firebase.firestore.Timestamp.fromDate(expiresAt),
+        });
+        return true;
+      });
+      if (!saved) {
+        continue;
+      }
+      elements.shareCodeLine.textContent = `Code ${code} expires in 1 hour.`;
+      setStatus(`Code ${code} is ready.`);
+      return;
+    } catch {
+      setStatus("Code generation failed. Check Firestore rules.");
+      return;
+    }
+  }
+
+  setStatus("Could not find an unused code. Try again.");
+}
+
+async function retrieveShareCode() {
+  const collection = shareCollection();
+  if (!collection) {
+    setStatus("Code transfer needs Firebase config.");
+    return;
+  }
+
+  const code = normalizeShareCode(elements.retrieveCodeInput.value);
+  elements.retrieveCodeInput.value = code;
+  if (code.length !== 6) {
+    setStatus("Enter a 6-digit retrieval code.");
+    return;
+  }
+
+  try {
+    const snapshot = await collection.doc(code).get();
+    if (!snapshot.exists) {
+      setStatus("No active clip found for that code.");
+      return;
+    }
+    const data = snapshot.data();
+    const expiresAt = data?.expiresAt?.toDate?.();
+    if (!expiresAt || expiresAt <= new Date()) {
+      setStatus("That code has expired.");
+      return;
+    }
+    const [clip] = normalizeClips([{ ...data.clip, createdAt: new Date().toISOString() }]);
+    if (!clip) {
+      setStatus("That code does not contain a valid clip.");
+      return;
+    }
+    await addClip(clip);
+    elements.retrieveCodeInput.value = "";
+    setStatus(`Retrieved clip from code ${code}.`);
+  } catch {
+    setStatus("Retrieve failed. Check the code or Firestore rules.");
+  }
 }
 
 async function addClip(partial) {
@@ -1462,6 +1611,16 @@ elements.imageEditor.addEventListener("click", (event) => {
 });
 elements.readClipboardButton.addEventListener("click", readClipboard);
 elements.screenshotButton.addEventListener("click", captureScreenshot);
+elements.shareCodeButton.addEventListener("click", generateShareCode);
+elements.retrieveCodeButton.addEventListener("click", retrieveShareCode);
+elements.retrieveCodeInput.addEventListener("input", (event) => {
+  event.target.value = normalizeShareCode(event.target.value);
+});
+elements.retrieveCodeInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    retrieveShareCode();
+  }
+});
 elements.screenshotPreset.addEventListener("change", () => {
   const preset = SCREENSHOT_PRESETS[elements.screenshotPreset.value];
   elements.screenshotMaxEdge.disabled = Boolean(preset);

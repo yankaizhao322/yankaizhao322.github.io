@@ -270,6 +270,50 @@ select:focus {
   margin-top: 12px;
 }
 
+.code-transfer {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(247, 250, 247, 0.72);
+}
+
+.code-transfer h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.code-transfer p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.code-line {
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #eef5f1;
+  overflow-wrap: anywhere;
+}
+
+.retrieve-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.retrieve-row input {
+  min-width: 0;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--surface);
+}
+
 .screenshot-settings {
   display: grid;
   grid-template-columns: 1fr 110px;
