@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClipboardStack Web</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">ClipboardStack Web</p>
+        <h1>Collect, clean, and reuse snippets in the browser.</h1>
+        <p class="lede">A polished online companion for ClipboardStack. Paste text, capture screenshots when your browser allows it, pin important clips, and sync them across browsers after signing in.</p>
+      </div>
+      <div class="hero-panel" aria-label="ClipboardStack activity preview">
+        <div class="stack-visual">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="metric-row">
+          <div>
+            <strong id="metricTotal">0</strong>
+            <span>clips</span>
+          </div>
+          <div>
+            <strong id="metricPinned">0</strong>
+            <span>pinned</span>
+          </div>
+          <div>
+            <strong id="metricBytes">0 KB</strong>
+            <span>stored</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="ClipboardStack workspace">
+      <aside class="capture-panel">
+        <div class="account-panel" aria-label="Account">
+          <div class="panel-head">
+            <h2>Account</h2>
+            <span id="syncPill" class="pill">Local only</span>
+          </div>
+          <form id="authForm" class="auth-form">
+            <label for="emailInput">Email</label>
+            <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com">
+            <label for="passwordInput">Password</label>
+            <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="6+ characters">
+            <div class="auth-actions">
+              <button id="signInButton" class="primary-button" type="submit">Sign In</button>
+              <button id="createAccountButton" type="button">Create Account</button>
+              <button id="signOutButton" type="button" hidden>Sign Out</button>
+            </div>
+          </form>
+          <p id="accountLine" class="hint account-line">Remote sync needs Firebase config. Local history still works.</p>
+        </div>
+
+        <div class="panel-head">
+          <h2>Capture</h2>
+          <span id="permissionPill" class="pill">Browser gated</span>
+        </div>
+        <textarea id="clipInput" placeholder="Paste text here, read the clipboard, or capture a screenshot after granting browser permission." spellcheck="false"></textarea>
+        <div class="capture-actions">
+          <button id="saveTextButton" class="primary-button" type="button">Save Text</button>
+          <button id="readClipboardButton" type="button">Read Clipboard</button>
+          <button id="screenshotButton" type="button">Screenshot</button>
+        </div>
+        <div class="screenshot-settings" aria-label="Screenshot settings">
+          <label for="screenshotPreset">Screenshot size</label>
+          <select id="screenshotPreset">
+            <option value="fast">Fast 720px</option>
+            <option value="balanced" selected>Balanced 1280px</option>
+            <option value="sharp">Sharp 1920px</option>
+            <option value="custom">Custom</option>
+          </select>
+          <label for="screenshotMaxEdge">Max edge</label>
+          <input id="screenshotMaxEdge" type="number" min="320" max="3840" step="80" value="1280" inputmode="numeric">
+        </div>
+        <p class="hint">Browsers require a click or paste before clipboard and screen capture access. This page cannot monitor your clipboard or screen in the background.</p>
+
+        <div class="quick-actions" aria-label="Data actions">
+          <button id="exportButton" type="button">Export JSON</button>
+          <label class="file-button" for="importFile">Import JSON</label>
+          <input id="importFile" type="file" accept="application/json,.json">
+          <button id="clearButton" class="danger-button" type="button">Clear</button>
+        </div>
+      </aside>
+
+      <section class="history-panel">
+        <div class="toolbar">
+          <div>
+            <h2>History</h2>
+            <p id="statusLine">Newest clips appear first.</p>
+          </div>
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="Search clips">
+            <select id="filterSelect" aria-label="Filter clips">
+              <option value="all">All clips</option>
+              <option value="text">Text</option>
+              <option value="image">Screenshots</option>
+              <option value="pinned">Pinned</option>
+              <option value="today">Today</option>
+            </select>
+          </div>
+        </div>
+        <div id="clipList" class="clip-list" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+
+  <template id="clipTemplate">
+    <article class="clip-card">
+      <div class="clip-meta">
+        <span class="badge"></span>
+        <time></time>
+      </div>
+      <pre></pre>
+      <img alt="">
+      <div class="clip-actions">
+        <button class="copy-action" type="button">Copy</button>
+        <button class="pin-action" type="button">Pin</button>
+        <button class="download-action" type="button">Download</button>
+        <button class="delete-action danger-button" type="button">Delete</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="./firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
