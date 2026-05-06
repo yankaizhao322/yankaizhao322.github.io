@@ -879,7 +879,7 @@ function render() {
 function renderMetrics() {
   elements.metricTotal.textContent = String(state.clips.length);
   elements.metricPinned.textContent = String(state.clips.filter((clip) => clip.pinned).length);
-  elements.metricBytes.textContent = formatBytes(estimatedBytes());
+  elements.metricBytes.textContent = `${formatBytes(estimatedBytes())} / ${formatBytes(MAX_STORAGE_BYTES)}`;
 }
 
 function formatBytes(bytes) {

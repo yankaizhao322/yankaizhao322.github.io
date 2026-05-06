@@ -74,18 +74,14 @@ button:hover,
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-  gap: 28px;
-  align-items: stretch;
-  min-height: 320px;
+  display: block;
 }
 
 .hero-copy {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 44px 0;
+  padding: 18px 0 4px;
 }
 
 .eyebrow {
@@ -104,10 +100,10 @@ p {
 }
 
 h1 {
-  max-width: 760px;
-  margin-bottom: 18px;
-  font-size: clamp(2.6rem, 6vw, 5.7rem);
-  line-height: 0.96;
+  max-width: 860px;
+  margin-bottom: 10px;
+  font-size: clamp(2.2rem, 4vw, 4.1rem);
+  line-height: 1.02;
   letter-spacing: 0;
 }
 
@@ -118,13 +114,12 @@ h2 {
 
 .lede {
   max-width: 680px;
-  margin-bottom: 0;
+  margin-bottom: 18px;
   color: var(--muted);
-  font-size: 1.08rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
-.hero-panel,
 .capture-panel,
 .history-panel {
   border: 1px solid rgba(216, 226, 220, 0.9);
@@ -134,52 +129,11 @@ h2 {
   backdrop-filter: blur(18px);
 }
 
-.hero-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  min-height: 320px;
-  padding: 24px;
-}
-
-.stack-visual {
-  position: relative;
-  min-height: 210px;
-}
-
-.stack-visual span {
-  position: absolute;
-  left: 50%;
-  width: min(88%, 340px);
-  height: 92px;
-  border: 1px solid rgba(31, 122, 92, 0.28);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff, #e8f3ee);
-  box-shadow: 0 14px 32px rgba(22, 45, 36, 0.13);
-}
-
-.stack-visual span:nth-child(1) {
-  top: 16px;
-  transform: translateX(-50%) rotate(-7deg);
-}
-
-.stack-visual span:nth-child(2) {
-  top: 70px;
-  transform: translateX(-50%) rotate(4deg);
-  background: linear-gradient(135deg, #fff9ea, #e8f3ee);
-}
-
-.stack-visual span:nth-child(3) {
-  top: 126px;
-  transform: translateX(-50%) rotate(-1deg);
-  background: linear-gradient(135deg, #eef5ff, #ffffff);
-}
-
 .metric-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
   gap: 10px;
+  max-width: 920px;
 }
 
 .metric-row div {
@@ -209,7 +163,7 @@ h2 {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
   gap: 20px;
-  margin-top: 28px;
+  margin-top: 18px;
 }
 
 .capture-panel,
@@ -646,13 +600,8 @@ button[hidden] {
 }
 
 @media (max-width: 900px) {
-  .hero,
   .workspace {
     grid-template-columns: 1fr;
-  }
-
-  .hero-copy {
-    padding-bottom: 0;
   }
 
   .toolbar,
@@ -674,10 +623,9 @@ button[hidden] {
   }
 
   h1 {
-    font-size: 2.45rem;
+    font-size: 2.15rem;
   }
 
-  .hero-panel,
   .capture-panel,
   .history-panel {
     padding: 14px;
