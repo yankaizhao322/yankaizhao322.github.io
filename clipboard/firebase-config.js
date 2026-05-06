@@ -1,5 +1,5 @@
 window.CLIPBOARDSTACK_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyD6fI6U0l4CJv7PdOfTvW3lnHZwmPj_L-Y",
+  apiKey: "AIzaSyDGfI6U0l4CJv7PdoFTvW3lnHZwmPj_L-Y",
   authDomain: "clipboardstack.firebaseapp.com",
   projectId: "clipboardstack",
   storageBucket: "clipboardstack.firebasestorage.app",
