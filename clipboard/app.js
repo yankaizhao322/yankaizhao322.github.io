@@ -412,6 +412,9 @@ async function addClip(partial) {
       id: makeId(),
       pinned: false,
       createdAt: new Date().toISOString(),
+      title: "",
+      folder: "",
+      tags: [],
       ...partial,
     };
     state.clips.unshift(changedClip);
@@ -518,10 +521,13 @@ function estimatedBytes() {
 }
 
 function estimatedClipBytes(clip) {
+  const title = typeof clip.title === "string" ? clip.title : "";
+  const folder = typeof clip.folder === "string" ? clip.folder : "";
+  const tags = normalizeTags(clip.tags);
   return 220
-    + clip.title.length
-    + clip.folder.length
-    + clip.tags.join(",").length
+    + title.length
+    + folder.length
+    + tags.join(",").length
     + (clip.kind === "image" ? clip.imageData.length : clip.text.length);
 }
 
@@ -699,7 +705,7 @@ function filteredClips() {
 }
 
 function searchableText(clip) {
-  return `${clip.kind} ${clip.title} ${clip.folder} ${clip.tags.join(" ")} ${clip.text} ${clip.digest}`.toLowerCase();
+  return `${clip.kind} ${clip.title || ""} ${clip.folder || ""} ${normalizeTags(clip.tags).join(" ")} ${clip.text} ${clip.digest}`.toLowerCase();
 }
 
 function render() {
@@ -739,7 +745,8 @@ function render() {
       minute: "2-digit",
     }).format(new Date(clip.createdAt));
     title.textContent = clip.title || defaultClipTitle(clip);
-    const tagPills = clip.tags.map((tag) => {
+    const clipTags = normalizeTags(clip.tags);
+    const tagPills = clipTags.map((tag) => {
       const pill = document.createElement("span");
       pill.className = "tag-pill";
       pill.textContent = tag;
@@ -874,7 +881,7 @@ function startDetailsEdit(card, clip) {
   tagLabel.textContent = "Tags";
   const tagInput = document.createElement("input");
   tagInput.type = "text";
-  tagInput.value = clip.tags.join(", ");
+  tagInput.value = normalizeTags(clip.tags).join(", ");
   tagInput.placeholder = "work, idea, screenshot";
 
   const saveButton = document.createElement("button");
