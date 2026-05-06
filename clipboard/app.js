@@ -2,6 +2,8 @@ const STORAGE_KEY = "clipboardstack.web.clips";
 const MAX_ITEMS = 120;
 const MAX_STORAGE_BYTES = 4 * 1024 * 1024;
 const REMOTE_LIMIT = 120;
+const MAX_REMOTE_CLIP_BYTES = 900 * 1024;
+const MAX_TAGS = 8;
 const SCREENSHOT_PRESETS = {
   fast: { maxEdge: 720, quality: 0.68 },
   balanced: { maxEdge: 1280, quality: 0.82 },
@@ -68,6 +70,7 @@ const elements = {
   drawColorInput: document.querySelector("#drawColorInput"),
   drawSizeInput: document.querySelector("#drawSizeInput"),
   editorUndoButton: document.querySelector("#editorUndoButton"),
+  editorResetButton: document.querySelector("#editorResetButton"),
   editorSaveButton: document.querySelector("#editorSaveButton"),
 };
 
@@ -99,12 +102,29 @@ function normalizeClips(clips) {
         text: kind === "text" ? content : "",
         imageData: kind === "image" ? content : "",
         title: typeof clip.title === "string" ? clip.title : (kind === "image" ? "Screenshot" : ""),
+        folder: typeof clip.folder === "string" ? clip.folder.trim() : "",
+        tags: normalizeTags(clip.tags),
         digest: typeof clip.digest === "string" ? clip.digest : fallbackDigest(content),
         pinned: Boolean(clip.pinned),
         createdAt: typeof clip.createdAt === "string" ? clip.createdAt : new Date().toISOString(),
       };
     })
     .filter(Boolean);
+}
+
+function normalizeTags(tags) {
+  if (!Array.isArray(tags)) {
+    return [];
+  }
+  return tags
+    .map((tag) => String(tag).trim().toLowerCase())
+    .filter(Boolean)
+    .filter((tag, index, all) => all.indexOf(tag) === index)
+    .slice(0, MAX_TAGS);
+}
+
+function parseTags(value) {
+  return normalizeTags(String(value || "").split(","));
 }
 
 function mergeClipLists(first, second) {
@@ -164,6 +184,10 @@ async function saveRemoteClip(clip) {
   if (!collection) {
     return;
   }
+  if (estimatedClipBytes(clip) > MAX_REMOTE_CLIP_BYTES) {
+    setAccountStatus("Clip saved locally, but it is too large for free remote sync.");
+    return;
+  }
   try {
     await collection.doc(clip.digest).set(clip);
     setAccountStatus(`Synced ${state.clips.length} clips to ${state.remote.user.email}.`);
@@ -206,8 +230,14 @@ async function syncAllLocalClips() {
   if (!collection) {
     return;
   }
+  const syncable = state.clips
+    .filter((clip) => estimatedClipBytes(clip) <= MAX_REMOTE_CLIP_BYTES)
+    .slice(0, REMOTE_LIMIT);
+  if (!syncable.length) {
+    return;
+  }
   const batch = state.remote.db.batch();
-  state.clips.slice(0, REMOTE_LIMIT).forEach((clip) => {
+  syncable.forEach((clip) => {
     batch.set(collection.doc(clip.digest), clip);
   });
   await batch.commit();
@@ -441,6 +471,20 @@ async function updateImageClip(clip, imageData) {
   render();
 }
 
+function updateClipDetails(id, title, folder, tags) {
+  const clip = state.clips.find((item) => item.id === id);
+  if (!clip) {
+    return;
+  }
+  clip.title = String(title || "").trim();
+  clip.folder = String(folder || "").trim();
+  clip.tags = parseTags(tags);
+  persistWithQuotaTrim();
+  saveRemoteClip(clip);
+  setStatus("Clip details updated.");
+  render();
+}
+
 function trimHistory() {
   let changed = false;
   while (state.clips.length > MAX_ITEMS || estimatedBytes() > MAX_STORAGE_BYTES) {
@@ -468,10 +512,17 @@ function findLastRemovableIndex() {
 function estimatedBytes() {
   let bytes = 2;
   for (const clip of state.clips) {
-    bytes += 180;
-    bytes += clip.kind === "image" ? clip.imageData.length : clip.text.length;
+    bytes += estimatedClipBytes(clip);
   }
   return bytes;
+}
+
+function estimatedClipBytes(clip) {
+  return 220
+    + clip.title.length
+    + clip.folder.length
+    + clip.tags.join(",").length
+    + (clip.kind === "image" ? clip.imageData.length : clip.text.length);
 }
 
 function deleteClip(id) {
@@ -648,7 +699,7 @@ function filteredClips() {
 }
 
 function searchableText(clip) {
-  return `${clip.kind} ${clip.title} ${clip.text} ${clip.digest}`.toLowerCase();
+  return `${clip.kind} ${clip.title} ${clip.folder} ${clip.tags.join(" ")} ${clip.text} ${clip.digest}`.toLowerCase();
 }
 
 function render() {
@@ -667,10 +718,13 @@ function render() {
     const card = fragment.querySelector(".clip-card");
     const badge = fragment.querySelector(".badge");
     const time = fragment.querySelector("time");
+    const title = fragment.querySelector(".clip-title");
+    const tagRow = fragment.querySelector(".tag-row");
     const pre = fragment.querySelector("pre");
     const image = fragment.querySelector("img");
     const copyButton = fragment.querySelector(".copy-action");
     const editButton = fragment.querySelector(".edit-action");
+    const detailsButton = fragment.querySelector(".details-action");
     const pinButton = fragment.querySelector(".pin-action");
     const downloadButton = fragment.querySelector(".download-action");
     const deleteButton = fragment.querySelector(".delete-action");
@@ -684,6 +738,21 @@ function render() {
       hour: "numeric",
       minute: "2-digit",
     }).format(new Date(clip.createdAt));
+    title.textContent = clip.title || defaultClipTitle(clip);
+    const tagPills = clip.tags.map((tag) => {
+      const pill = document.createElement("span");
+      pill.className = "tag-pill";
+      pill.textContent = tag;
+      return pill;
+    });
+    if (clip.folder) {
+      const folderPill = document.createElement("span");
+      folderPill.className = "tag-pill folder-pill";
+      folderPill.textContent = `folder: ${clip.folder}`;
+      tagPills.unshift(folderPill);
+    }
+    tagRow.replaceChildren(...tagPills);
+    tagRow.hidden = tagPills.length === 0;
 
     if (clip.kind === "image") {
       pre.hidden = true;
@@ -706,6 +775,7 @@ function render() {
     }
 
     copyButton.addEventListener("click", () => copyClip(clip));
+    detailsButton.addEventListener("click", () => startDetailsEdit(card, clip));
     pinButton.textContent = clip.pinned ? "Unpin" : "Pin";
     pinButton.addEventListener("click", () => togglePin(clip.id));
     deleteButton.addEventListener("click", () => deleteClip(clip.id));
@@ -736,6 +806,15 @@ function setStatus(message) {
   elements.statusLine.textContent = message;
 }
 
+function defaultClipTitle(clip) {
+  return clip.kind === "image" ? "Screenshot" : firstLine(clip.text);
+}
+
+function firstLine(text) {
+  const line = String(text || "").trim().split("\n")[0] || "Text clip";
+  return line.length > 80 ? `${line.slice(0, 77)}...` : line;
+}
+
 function startTextEdit(card, clip) {
   const pre = card.querySelector("pre");
   const actions = card.querySelector(".clip-actions");
@@ -762,6 +841,59 @@ function startTextEdit(card, clip) {
   editor.focus();
 
   saveButton.addEventListener("click", () => updateTextClip(clip.id, editor.value));
+  cancelButton.addEventListener("click", () => render());
+  actions.querySelectorAll("button").forEach((button) => {
+    button.disabled = true;
+  });
+}
+
+function startDetailsEdit(card, clip) {
+  const title = card.querySelector(".clip-title");
+  const tagRow = card.querySelector(".tag-row");
+  const actions = card.querySelector(".clip-actions");
+  title.hidden = true;
+  tagRow.hidden = true;
+
+  const form = document.createElement("div");
+  form.className = "details-editor";
+
+  const titleLabel = document.createElement("label");
+  titleLabel.textContent = "Title";
+  const titleInput = document.createElement("input");
+  titleInput.type = "text";
+  titleInput.value = clip.title || defaultClipTitle(clip);
+
+  const folderLabel = document.createElement("label");
+  folderLabel.textContent = "Folder";
+  const folderInput = document.createElement("input");
+  folderInput.type = "text";
+  folderInput.value = clip.folder || "";
+  folderInput.placeholder = "work, school, ideas";
+
+  const tagLabel = document.createElement("label");
+  tagLabel.textContent = "Tags";
+  const tagInput = document.createElement("input");
+  tagInput.type = "text";
+  tagInput.value = clip.tags.join(", ");
+  tagInput.placeholder = "work, idea, screenshot";
+
+  const saveButton = document.createElement("button");
+  saveButton.className = "primary-button";
+  saveButton.type = "button";
+  saveButton.textContent = "Save Details";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Cancel";
+
+  const editActions = document.createElement("div");
+  editActions.className = "edit-actions";
+  editActions.append(saveButton, cancelButton);
+  form.append(titleLabel, titleInput, folderLabel, folderInput, tagLabel, tagInput, editActions);
+  tagRow.after(form);
+  titleInput.focus();
+
+  saveButton.addEventListener("click", () => updateClipDetails(clip.id, titleInput.value, folderInput.value, tagInput.value));
   cancelButton.addEventListener("click", () => render());
   actions.querySelectorAll("button").forEach((button) => {
     button.disabled = true;
@@ -888,6 +1020,20 @@ function undoEditor() {
   state.editor.history.pop();
   restoreEditorImage(state.editor.history[state.editor.history.length - 1]);
   elements.editorStatus.textContent = "Last edit undone.";
+}
+
+function resetEditor() {
+  if (!state.editor.image) {
+    return;
+  }
+  elements.editorCanvas.width = state.editor.image.naturalWidth;
+  elements.editorCanvas.height = state.editor.image.naturalHeight;
+  canvasContext().drawImage(state.editor.image, 0, 0);
+  state.editor.history = [];
+  state.editor.cropBase = null;
+  state.editor.cropBox = null;
+  pushEditorHistory();
+  elements.editorStatus.textContent = "Screenshot reset to the original capture.";
 }
 
 function editorPoint(event) {
@@ -1059,6 +1205,7 @@ elements.editorCloseButton.addEventListener("click", closeImageEditor);
 elements.drawModeButton.addEventListener("click", () => setEditorMode("draw"));
 elements.cropModeButton.addEventListener("click", () => setEditorMode("crop"));
 elements.editorUndoButton.addEventListener("click", undoEditor);
+elements.editorResetButton.addEventListener("click", resetEditor);
 elements.editorSaveButton.addEventListener("click", saveImageEditor);
 elements.editorCanvas.addEventListener("pointerdown", beginEditorPointer);
 elements.editorCanvas.addEventListener("pointermove", moveEditorPointer);

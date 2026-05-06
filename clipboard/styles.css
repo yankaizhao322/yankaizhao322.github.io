@@ -411,6 +411,38 @@ select:focus {
   font-size: 0.82rem;
 }
 
+.clip-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid #d7e3dc;
+  border-radius: 999px;
+  padding: 0 9px;
+  color: #305246;
+  background: #f0f8f4;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.folder-pill {
+  border-color: rgba(31, 122, 92, 0.38);
+  color: var(--accent-strong);
+  background: #e6f3ed;
+}
+
 .clip-card pre {
   max-height: 220px;
   overflow: auto;
@@ -436,6 +468,30 @@ select:focus {
   margin-bottom: 14px;
 }
 
+.details-editor {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fbf9;
+}
+
+.details-editor label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.details-editor input {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--surface);
+}
+
 .clip-card img {
   display: block;
   width: 100%;
@@ -450,6 +506,8 @@ select:focus {
 
 .clip-card pre[hidden],
 .clip-card img[hidden],
+.clip-title[hidden],
+.tag-row[hidden],
 .clip-card button[hidden],
 button[hidden] {
   display: none;
