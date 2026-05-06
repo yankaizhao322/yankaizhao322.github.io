@@ -98,7 +98,6 @@ class Solution:
 
 寻找“最大”值：如果你要寻找最大长度、最大和、最大数量等，那么你应该将存储最大值的变量初始化为 0 或 float('-inf')（负无穷大），以确保任何正向结果都能被记录下来。
 
-
 ## Foundation         
 1. 可以用逗号分隔：print("Output:", i) 2.或者用 f-string:print(f"Output: {i}")
    append()是Python中列表（list）的一个方法，用于在列表末尾添加新的元素。
@@ -117,17 +116,6 @@ order by user_id
 ```mysql
 select patient_id, patient_name, conditions from Patients
 where conditions like 'DIAB1%' or conditions like '% DIAB1%'
-```
---- 找到状况里 DIAB1 ...或者 ... DIAB1...的情况
-
-### 196. 删重复邮箱
-
-```mysql
-delete p1 
-from person p1
-join person p2
-on p1.email = p2.email
-and p1.id > p2.id
 ```
 
 ### 176. second highest salary
@@ -152,7 +140,7 @@ order by sell_date
 
 *output: Basketball,Headphone,T-shirt*
 
-
+Get-ChildItem -Path D:\ -Filter .git -Recurse -Hidden -ErrorAction SilentlyContinue
 
 
 
