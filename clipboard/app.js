@@ -56,6 +56,7 @@ const elements = {
   authForm: document.querySelector("#authForm"),
   emailInput: document.querySelector("#emailInput"),
   passwordInput: document.querySelector("#passwordInput"),
+  confirmPasswordInput: document.querySelector("#confirmPasswordInput"),
   signInButton: document.querySelector("#signInButton"),
   createAccountButton: document.querySelector("#createAccountButton"),
   forgotPasswordButton: document.querySelector("#forgotPasswordButton"),
@@ -275,6 +276,12 @@ function initializeRemote() {
       setAccountStatus("This browser blocked persistent sign-in.");
     });
     state.remote.auth.onAuthStateChanged(handleAuthState);
+    window.addEventListener("focus", () => refreshVerificationStatus(true));
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        refreshVerificationStatus(true);
+      }
+    });
     updateAccountUi();
   } catch {
     state.remote.available = false;
@@ -322,6 +329,7 @@ function updateAccountUi() {
   elements.signOutButton.hidden = !signedIn;
   elements.emailInput.disabled = signedIn || !state.remote.available;
   elements.passwordInput.disabled = signedIn || !state.remote.available;
+  elements.confirmPasswordInput.disabled = signedIn || !state.remote.available;
   elements.syncPill.textContent = signedIn
     ? (needsVerification ? "Verify email" : "Synced")
     : (state.remote.available ? "Ready" : "Local only");
@@ -418,7 +426,42 @@ function authInputs() {
   return {
     email: elements.emailInput.value.trim(),
     password: elements.passwordInput.value,
+    confirmPassword: elements.confirmPasswordInput.value,
   };
+}
+
+function verificationActionSettings() {
+  if (window.location.hostname !== "yankaizhao322.github.io") {
+    return undefined;
+  }
+  return {
+    url: `${window.location.origin}${window.location.pathname}`,
+    handleCodeInApp: false,
+  };
+}
+
+async function sendVerificationEmail(user) {
+  await user.sendEmailVerification(verificationActionSettings());
+}
+
+async function refreshVerificationStatus(silent = false) {
+  const user = state.remote.auth?.currentUser;
+  if (!user || user.emailVerified) {
+    return;
+  }
+  try {
+    await user.reload();
+    const refreshed = state.remote.auth.currentUser;
+    if (refreshed?.emailVerified) {
+      await handleAuthState(refreshed);
+    } else if (!silent) {
+      setAccountStatus(`Still waiting for ${refreshed.email} to verify email.`);
+    }
+  } catch {
+    if (!silent) {
+      setAccountStatus("Could not refresh verification status. Try signing out and back in.");
+    }
+  }
 }
 
 function authErrorMessage(error, action) {
@@ -1343,7 +1386,7 @@ elements.createAccountButton.addEventListener("click", async () => {
     setAccountStatus("Add Firebase config before creating accounts.");
     return;
   }
-  const { email, password } = authInputs();
+  const { email, password, confirmPassword } = authInputs();
   if (!isValidEmail(email)) {
     setAccountStatus("Use a real email address, like name@example.com.");
     return;
@@ -1352,10 +1395,15 @@ elements.createAccountButton.addEventListener("click", async () => {
     setAccountStatus("Password needs at least 6 characters.");
     return;
   }
+  if (password !== confirmPassword) {
+    setAccountStatus("Passwords do not match. Re-enter both password fields.");
+    return;
+  }
   try {
     const credential = await state.remote.auth.createUserWithEmailAndPassword(email, password);
-    await credential.user.sendEmailVerification();
-    setAccountStatus(`Account created. Verification email sent to ${email}.`);
+    await sendVerificationEmail(credential.user);
+    elements.confirmPasswordInput.value = "";
+    setAccountStatus(`Account created. Verification email sent to ${email}. Open it, then return here.`);
   } catch (error) {
     setAccountStatus(authErrorMessage(error, "Account creation"));
   }
@@ -1383,23 +1431,14 @@ elements.verifyEmailButton.addEventListener("click", async () => {
     return;
   }
   try {
-    await user.sendEmailVerification();
-    setAccountStatus(`Verification email sent to ${user.email}.`);
+    await sendVerificationEmail(user);
+    setAccountStatus(`Verification email sent to ${user.email}. Open it, then return here.`);
   } catch (error) {
     setAccountStatus(authErrorMessage(error, "Email verification"));
   }
 });
 elements.refreshUserButton.addEventListener("click", async () => {
-  const user = state.remote.auth?.currentUser;
-  if (!user) {
-    return;
-  }
-  try {
-    await user.reload();
-    await handleAuthState(state.remote.auth.currentUser);
-  } catch {
-    setAccountStatus("Could not refresh verification status. Try signing out and back in.");
-  }
+  await refreshVerificationStatus(false);
 });
 elements.signOutButton.addEventListener("click", async () => {
   if (state.remote.auth) {

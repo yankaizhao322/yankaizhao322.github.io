@@ -225,6 +225,11 @@ textarea {
   font-weight: 700;
 }
 
+.label-note {
+  font-weight: 600;
+  color: #87938d;
+}
+
 .auth-form input {
   width: 100%;
   min-height: 40px;
