@@ -47,6 +47,7 @@ const elements = {
   saveTextButton: document.querySelector("#saveTextButton"),
   readClipboardButton: document.querySelector("#readClipboardButton"),
   screenshotButton: document.querySelector("#screenshotButton"),
+  transferOpenButton: document.querySelector("#transferOpenButton"),
   captureCategoryInput: document.querySelector("#captureCategoryInput"),
   categoryOptions: document.querySelector("#categoryOptions"),
   shareCodeButton: document.querySelector("#shareCodeButton"),
@@ -72,6 +73,8 @@ const elements = {
   accountOpenButton: document.querySelector("#accountOpenButton"),
   accountModal: document.querySelector("#accountModal"),
   accountCloseButton: document.querySelector("#accountCloseButton"),
+  transferModal: document.querySelector("#transferModal"),
+  transferCloseButton: document.querySelector("#transferCloseButton"),
   emailInput: document.querySelector("#emailInput"),
   passwordInput: document.querySelector("#passwordInput"),
   confirmPasswordInput: document.querySelector("#confirmPasswordInput"),
@@ -1273,10 +1276,8 @@ function render() {
     const fragment = elements.clipTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".clip-card");
     const selectInput = fragment.querySelector(".select-action");
-    const badge = fragment.querySelector(".badge");
     const time = fragment.querySelector("time");
     const title = fragment.querySelector(".clip-title");
-    const tagRow = fragment.querySelector(".tag-row");
     const pre = fragment.querySelector("pre");
     const image = fragment.querySelector("img");
     const copyButton = fragment.querySelector(".copy-action");
@@ -1297,7 +1298,6 @@ function render() {
       }
       render();
     });
-    badge.textContent = clip.pinned ? "Pinned" : `${clip.kind}:${clip.digest.replace("fnv:", "").slice(0, 8)}`;
     time.dateTime = clip.createdAt;
     time.textContent = new Intl.DateTimeFormat(undefined, {
       month: "short",
@@ -1307,22 +1307,6 @@ function render() {
     }).format(new Date(clip.createdAt));
     title.hidden = true;
     title.textContent = "";
-    const clipTags = normalizeTags(clip.tags);
-    const tagPills = clipTags.map((tag) => {
-      const pill = document.createElement("span");
-      pill.className = "tag-pill";
-      pill.textContent = tag;
-      return pill;
-    });
-    if (clip.folder) {
-      const folderPill = document.createElement("span");
-      folderPill.className = "tag-pill folder-pill";
-      folderPill.textContent = `folder: ${clip.folder}`;
-      tagPills.unshift(folderPill);
-    }
-    tagRow.replaceChildren(...tagPills);
-    tagRow.hidden = tagPills.length === 0;
-
     if (clip.kind === "image") {
       pre.hidden = true;
       image.hidden = false;
@@ -1393,6 +1377,14 @@ function closeAccountModal() {
   elements.accountModal.hidden = true;
 }
 
+function openTransferModal() {
+  elements.transferModal.hidden = false;
+}
+
+function closeTransferModal() {
+  elements.transferModal.hidden = true;
+}
+
 function defaultClipTitle(clip) {
   return clip.kind === "image" ? "Screenshot" : firstLine(clip.text);
 }
@@ -1436,10 +1428,8 @@ function startTextEdit(card, clip) {
 
 function startDetailsEdit(card, clip) {
   const title = card.querySelector(".clip-title");
-  const tagRow = card.querySelector(".tag-row");
   const actions = card.querySelector(".clip-actions");
   title.hidden = true;
-  tagRow.hidden = true;
 
   const form = document.createElement("div");
   form.className = "details-editor";
@@ -1477,7 +1467,7 @@ function startDetailsEdit(card, clip) {
   editActions.className = "edit-actions";
   editActions.append(saveButton, cancelButton);
   form.append(titleLabel, titleInput, folderLabel, folderInput, tagLabel, tagInput, editActions);
-  tagRow.after(form);
+  title.after(form);
   titleInput.focus();
 
   saveButton.addEventListener("click", () => updateClipDetails(clip.id, titleInput.value, folderInput.value, tagInput.value));
@@ -1817,9 +1807,16 @@ async function saveImageEditor() {
 elements.saveTextButton.addEventListener("click", () => addTextClip(elements.clipInput.value));
 elements.accountOpenButton.addEventListener("click", openAccountModal);
 elements.accountCloseButton.addEventListener("click", closeAccountModal);
+elements.transferOpenButton.addEventListener("click", openTransferModal);
+elements.transferCloseButton.addEventListener("click", closeTransferModal);
 elements.accountModal.addEventListener("click", (event) => {
   if (event.target === elements.accountModal) {
     closeAccountModal();
+  }
+});
+elements.transferModal.addEventListener("click", (event) => {
+  if (event.target === elements.transferModal) {
+    closeTransferModal();
   }
 });
 elements.authForm.addEventListener("submit", async (event) => {
