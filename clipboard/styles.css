@@ -82,7 +82,7 @@ button:disabled:hover {
 .shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 30px 0;
+  padding: 18px 0;
 }
 
 .hero {
@@ -94,7 +94,7 @@ button:disabled:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 8px 0 4px;
+  padding: 2px 0 4px;
   text-align: center;
 }
 
@@ -116,7 +116,7 @@ p {
 
 h1 {
   margin-bottom: 0;
-  font-size: clamp(2rem, 3.4vw, 3.3rem);
+  font-size: clamp(1.1rem, 1.8vw, 1.75rem);
   line-height: 1.08;
   letter-spacing: 0;
 }
@@ -162,14 +162,14 @@ h2 {
   gap: 12px;
   width: 100%;
   max-width: 1100px;
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .metric-row div {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 16px 18px;
+  padding: 12px 14px;
   background: rgba(255, 255, 255, 0.72);
   text-align: left;
 }
@@ -181,7 +181,7 @@ h2 {
 
 .metric-row strong {
   overflow-wrap: anywhere;
-  font-size: 1.55rem;
+  font-size: 1.25rem;
 }
 
 .metric-row span {
@@ -335,6 +335,16 @@ select:focus {
   gap: 10px;
 }
 
+.clip-actions {
+  gap: 7px;
+}
+
+.clip-actions button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 0.86rem;
+}
+
 .capture-actions {
   margin-top: 12px;
 }
@@ -449,11 +459,12 @@ select:focus {
 
 .filters input,
 .filters select {
-  min-height: 40px;
+  min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 0 12px;
+  padding: 0 10px;
   background: var(--surface);
+  font-size: 0.9rem;
 }
 
 .clip-list {
@@ -485,7 +496,7 @@ select:focus {
   position: relative;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.78);
 }
 
@@ -498,9 +509,9 @@ select:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
@@ -520,9 +531,9 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .clip-title {
@@ -535,19 +546,19 @@ select:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .tag-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: 22px;
   border: 1px solid #d7e3dc;
   border-radius: 999px;
-  padding: 0 9px;
+  padding: 0 8px;
   color: #305246;
   background: #f0f8f4;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
@@ -609,10 +620,10 @@ select:focus {
 .clip-card img {
   display: block;
   width: 100%;
-  max-height: 340px;
+  max-height: 180px;
   aspect-ratio: 16 / 9;
   object-fit: contain;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #eef3f0;

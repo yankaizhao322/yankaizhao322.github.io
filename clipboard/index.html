@@ -55,7 +55,7 @@
         <div class="code-transfer" aria-label="Code transfer">
           <div>
             <h3>Code transfer</h3>
-            <p>Generate a short code for the capture box or latest clip. Codes expire after 1 hour.</p>
+            <p>Select clips or type content, then generate a code. Retrieve imports all shared clips.</p>
           </div>
           <button id="shareCodeButton" type="button">Generate Code</button>
           <p id="shareCodeLine" class="code-line">No code yet.</p>
@@ -93,6 +93,7 @@
           </div>
           <div class="filters">
             <input id="searchInput" type="search" placeholder="Search clips">
+            <input id="dateFilterInput" type="date" aria-label="Filter clips by date">
             <select id="filterSelect" aria-label="Filter clips">
               <option value="all">All clips</option>
               <option value="text">Text</option>

@@ -6,6 +6,7 @@ const MAX_REMOTE_CLIP_BYTES = 900 * 1024;
 const MAX_TAGS = 8;
 const SHARE_CODE_TTL_MS = 60 * 60 * 1000;
 const SHARE_CODE_RETRIES = 12;
+const MAX_SHARE_CLIPS = 20;
 const EMAIL_RESEND_COOLDOWN_MS = 60 * 1000;
 const SCREENSHOT_PRESETS = {
   fast: { maxEdge: 720, quality: 0.68 },
@@ -18,6 +19,7 @@ const state = {
   index: new Map(),
   query: "",
   filter: "all",
+  dateFilter: "",
   selectedIds: new Set(),
   remote: {
     available: false,
@@ -57,6 +59,7 @@ const elements = {
   importFile: document.querySelector("#importFile"),
   clearButton: document.querySelector("#clearButton"),
   searchInput: document.querySelector("#searchInput"),
+  dateFilterInput: document.querySelector("#dateFilterInput"),
   filterSelect: document.querySelector("#filterSelect"),
   clipList: document.querySelector("#clipList"),
   clipTemplate: document.querySelector("#clipTemplate"),
@@ -179,6 +182,10 @@ function cloneShareClip(clip) {
     pinned: false,
     createdAt: new Date().toISOString(),
   };
+}
+
+function sharePayloadBytes(clips) {
+  return clips.reduce((total, clip) => total + estimatedClipBytes(clip), 0);
 }
 
 function mergeClipLists(first, second) {
@@ -685,6 +692,18 @@ async function clipFromCaptureOrLatest() {
   return state.clips[0] ? cloneShareClip(state.clips[0]) : null;
 }
 
+async function clipsForShareCode() {
+  const selected = state.clips
+    .filter((clip) => state.selectedIds.has(clip.id))
+    .slice(0, MAX_SHARE_CLIPS)
+    .map(cloneShareClip);
+  if (selected.length) {
+    return selected;
+  }
+  const clip = await clipFromCaptureOrLatest();
+  return clip ? [clip] : [];
+}
+
 async function generateShareCode() {
   const collection = shareCollection();
   if (!collection) {
@@ -692,13 +711,17 @@ async function generateShareCode() {
     return;
   }
 
-  const clip = await clipFromCaptureOrLatest();
-  if (!clip) {
-    setStatus("Save or type something before generating a code.");
+  const clips = await clipsForShareCode();
+  if (!clips.length) {
+    setStatus("Select clips, save something, or type content before generating a code.");
     return;
   }
-  if (estimatedClipBytes(clip) > MAX_REMOTE_CLIP_BYTES) {
-    setStatus("This clip is too large for code transfer.");
+  if (state.selectedIds.size > MAX_SHARE_CLIPS) {
+    setStatus(`Code transfer can share up to ${MAX_SHARE_CLIPS} selected clips at a time.`);
+    return;
+  }
+  if (sharePayloadBytes(clips) > MAX_REMOTE_CLIP_BYTES) {
+    setStatus("Selected clips are too large for one code.");
     return;
   }
 
@@ -718,7 +741,7 @@ async function generateShareCode() {
         }
         transaction.set(ref, {
           code,
-          clip,
+          clips,
           createdAt: globalThis.firebase.firestore.Timestamp.fromDate(now),
           expiresAt: globalThis.firebase.firestore.Timestamp.fromDate(expiresAt),
         });
@@ -727,8 +750,8 @@ async function generateShareCode() {
       if (!saved) {
         continue;
       }
-      elements.shareCodeLine.textContent = `Code ${code} expires in 1 hour.`;
-      setStatus(`Code ${code} is ready.`);
+      elements.shareCodeLine.textContent = `Code ${code} shares ${clips.length} ${clips.length === 1 ? "clip" : "clips"} for 1 hour.`;
+      setStatus(`Code ${code} is ready for ${clips.length} ${clips.length === 1 ? "clip" : "clips"}.`);
       return;
     } catch {
       setStatus("Code generation failed. Check Firestore rules.");
@@ -765,14 +788,17 @@ async function retrieveShareCode() {
       setStatus("That code has expired.");
       return;
     }
-    const [clip] = normalizeClips([{ ...data.clip, createdAt: new Date().toISOString() }]);
-    if (!clip) {
+    const rawClips = Array.isArray(data?.clips) ? data.clips : [data?.clip];
+    const clips = normalizeClips(rawClips.map((clip) => ({ ...clip, createdAt: new Date().toISOString() })));
+    if (!clips.length) {
       setStatus("That code does not contain a valid clip.");
       return;
     }
-    await addClip(clip);
+    for (const clip of clips) {
+      await addClip(clip);
+    }
     elements.retrieveCodeInput.value = "";
-    setStatus(`Retrieved clip from code ${code}.`);
+    setStatus(`Retrieved ${clips.length} ${clips.length === 1 ? "clip" : "clips"} from code ${code}.`);
   } catch {
     setStatus("Retrieve failed. Check the code or Firestore rules.");
   }
@@ -1154,6 +1180,9 @@ function filteredClips() {
   const today = new Date().toDateString();
 
   return state.clips.filter((clip) => {
+    if (state.dateFilter && clip.createdAt.slice(0, 10) !== state.dateFilter) {
+      return false;
+    }
     if (state.filter === "text" && clip.kind !== "text") {
       return false;
     }
@@ -1234,7 +1263,8 @@ function render() {
       hour: "numeric",
       minute: "2-digit",
     }).format(new Date(clip.createdAt));
-    title.textContent = clip.title || defaultClipTitle(clip);
+    title.hidden = true;
+    title.textContent = "";
     const clipTags = normalizeTags(clip.tags);
     const tagPills = clipTags.map((tag) => {
       const pill = document.createElement("span");
@@ -1262,8 +1292,8 @@ function render() {
       editButton.textContent = "Annotate / Crop";
       editButton.addEventListener("click", () => openImageEditor(clip));
     } else {
-      pre.hidden = false;
-      pre.textContent = clip.text;
+      pre.hidden = true;
+      pre.textContent = "";
       image.hidden = true;
       downloadButton.hidden = true;
       copyButton.textContent = "Copy";
@@ -1901,6 +1931,10 @@ elements.importFile.addEventListener("change", (event) => {
 });
 elements.searchInput.addEventListener("input", (event) => {
   state.query = event.target.value;
+  render();
+});
+elements.dateFilterInput.addEventListener("change", (event) => {
+  state.dateFilter = event.target.value;
   render();
 });
 elements.filterSelect.addEventListener("change", (event) => {
