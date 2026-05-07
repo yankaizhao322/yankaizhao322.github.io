@@ -188,6 +188,43 @@ function sharePayloadBytes(clips) {
   return clips.reduce((total, clip) => total + estimatedClipBytes(clip), 0);
 }
 
+async function shareClipPayload(clips) {
+  if (clips.length === 1) {
+    return clips[0];
+  }
+  const bundle = JSON.stringify(clips);
+  return {
+    kind: "text",
+    text: `Shared selection: ${clips.length} clips`,
+    imageData: bundle,
+    title: "Shared selection",
+    folder: "",
+    tags: ["bundle"],
+    digest: await digestValue(`bundle:${bundle}`),
+    pinned: false,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function clipsFromShareData(data) {
+  if (Array.isArray(data?.clips)) {
+    return data.clips;
+  }
+  const clip = data?.clip;
+  if (!clip) {
+    return [];
+  }
+  if (clip.title === "Shared selection" && typeof clip.imageData === "string") {
+    try {
+      const parsed = JSON.parse(clip.imageData);
+      return Array.isArray(parsed) ? parsed : [clip];
+    } catch {
+      return [clip];
+    }
+  }
+  return [clip];
+}
+
 function mergeClipLists(first, second) {
   const byDigest = new Map();
   for (const clip of [...first, ...second]) {
@@ -720,7 +757,8 @@ async function generateShareCode() {
     setStatus(`Code transfer can share up to ${MAX_SHARE_CLIPS} selected clips at a time.`);
     return;
   }
-  if (sharePayloadBytes(clips) > MAX_REMOTE_CLIP_BYTES) {
+  const shareClip = await shareClipPayload(clips);
+  if (estimatedClipBytes(shareClip) > MAX_REMOTE_CLIP_BYTES || sharePayloadBytes(clips) > MAX_REMOTE_CLIP_BYTES) {
     setStatus("Selected clips are too large for one code.");
     return;
   }
@@ -741,7 +779,7 @@ async function generateShareCode() {
         }
         transaction.set(ref, {
           code,
-          clips,
+          clip: shareClip,
           createdAt: globalThis.firebase.firestore.Timestamp.fromDate(now),
           expiresAt: globalThis.firebase.firestore.Timestamp.fromDate(expiresAt),
         });
@@ -788,7 +826,7 @@ async function retrieveShareCode() {
       setStatus("That code has expired.");
       return;
     }
-    const rawClips = Array.isArray(data?.clips) ? data.clips : [data?.clip];
+    const rawClips = clipsFromShareData(data);
     const clips = normalizeClips(rawClips.map((clip) => ({ ...clip, createdAt: new Date().toISOString() })));
     if (!clips.length) {
       setStatus("That code does not contain a valid clip.");
