@@ -6,6 +6,7 @@ const MAX_REMOTE_CLIP_BYTES = 900 * 1024;
 const MAX_TAGS = 8;
 const SHARE_CODE_TTL_MS = 60 * 60 * 1000;
 const SHARE_CODE_RETRIES = 12;
+const EMAIL_RESEND_COOLDOWN_MS = 60 * 1000;
 const SCREENSHOT_PRESETS = {
   fast: { maxEdge: 720, quality: 0.68 },
   balanced: { maxEdge: 1280, quality: 0.82 },
@@ -23,6 +24,8 @@ const state = {
     db: null,
     user: null,
   },
+  verificationCooldownUntil: 0,
+  verificationCooldownTimer: null,
   editor: {
     clip: null,
     mode: "draw",
@@ -69,6 +72,11 @@ const elements = {
   verifyEmailButton: document.querySelector("#verifyEmailButton"),
   refreshUserButton: document.querySelector("#refreshUserButton"),
   signOutButton: document.querySelector("#signOutButton"),
+  accountSettings: document.querySelector("#accountSettings"),
+  currentPasswordInput: document.querySelector("#currentPasswordInput"),
+  newPasswordInput: document.querySelector("#newPasswordInput"),
+  confirmNewPasswordInput: document.querySelector("#confirmNewPasswordInput"),
+  changePasswordButton: document.querySelector("#changePasswordButton"),
   syncPill: document.querySelector("#syncPill"),
   accountLine: document.querySelector("#accountLine"),
   imageEditor: document.querySelector("#imageEditor"),
@@ -349,15 +357,25 @@ async function handleAuthState(user) {
 function updateAccountUi() {
   const signedIn = Boolean(state.remote.user);
   const needsVerification = Boolean(state.remote.user && !state.remote.user.emailVerified);
+  const cooldownRemaining = Math.max(0, state.verificationCooldownUntil - Date.now());
   elements.signInButton.hidden = signedIn;
   elements.createAccountButton.hidden = signedIn;
   elements.forgotPasswordButton.hidden = signedIn;
   elements.verifyEmailButton.hidden = !needsVerification;
+  elements.verifyEmailButton.disabled = cooldownRemaining > 0;
+  elements.verifyEmailButton.textContent = cooldownRemaining > 0
+    ? `Resend in ${Math.ceil(cooldownRemaining / 1000)}s`
+    : "Verify Email";
   elements.refreshUserButton.hidden = !needsVerification;
   elements.signOutButton.hidden = !signedIn;
+  elements.accountSettings.hidden = !signedIn;
   elements.emailInput.disabled = signedIn || !state.remote.available;
   elements.passwordInput.disabled = signedIn || !state.remote.available;
   elements.confirmPasswordInput.disabled = signedIn || !state.remote.available;
+  elements.currentPasswordInput.disabled = !signedIn || !state.remote.available;
+  elements.newPasswordInput.disabled = !signedIn || !state.remote.available;
+  elements.confirmNewPasswordInput.disabled = !signedIn || !state.remote.available;
+  elements.changePasswordButton.disabled = !signedIn || !state.remote.available;
   elements.syncPill.textContent = signedIn
     ? (needsVerification ? "Verify email" : "Synced")
     : (state.remote.available ? "Ready" : "Local only");
@@ -368,6 +386,32 @@ function updateAccountUi() {
 
 function setAccountStatus(message) {
   elements.accountLine.textContent = message;
+}
+
+function verificationHelpText(email) {
+  return `Verification email sent to ${email}. Check spam, confirm the email address is spelled correctly, wait a few minutes, then resend if needed.`;
+}
+
+function scheduleVerificationCooldownTick() {
+  if (state.verificationCooldownTimer) {
+    clearTimeout(state.verificationCooldownTimer);
+    state.verificationCooldownTimer = null;
+  }
+  const remaining = state.verificationCooldownUntil - Date.now();
+  if (remaining <= 0) {
+    updateAccountUi();
+    return;
+  }
+  state.verificationCooldownTimer = setTimeout(() => {
+    updateAccountUi();
+    scheduleVerificationCooldownTick();
+  }, Math.min(1000, remaining));
+}
+
+function startVerificationCooldown() {
+  state.verificationCooldownUntil = Date.now() + EMAIL_RESEND_COOLDOWN_MS;
+  updateAccountUi();
+  scheduleVerificationCooldownTick();
 }
 
 function persistWithQuotaTrim() {
@@ -458,6 +502,14 @@ function authInputs() {
   };
 }
 
+function passwordChangeInputs() {
+  return {
+    currentPassword: elements.currentPasswordInput.value,
+    newPassword: elements.newPasswordInput.value,
+    confirmNewPassword: elements.confirmNewPasswordInput.value,
+  };
+}
+
 function verificationActionSettings() {
   if (window.location.hostname !== "yankaizhao322.github.io") {
     return undefined;
@@ -470,6 +522,52 @@ function verificationActionSettings() {
 
 async function sendVerificationEmail(user) {
   await user.sendEmailVerification(verificationActionSettings());
+  startVerificationCooldown();
+}
+
+function supportsPasswordChange(user) {
+  return user?.providerData?.some((provider) => provider.providerId === "password");
+}
+
+async function changePassword() {
+  const user = state.remote.auth?.currentUser;
+  if (!user) {
+    setAccountStatus("Sign in before changing your password.");
+    return;
+  }
+  if (!supportsPasswordChange(user)) {
+    setAccountStatus("Password change is only available for email/password accounts.");
+    return;
+  }
+
+  const { currentPassword, newPassword, confirmNewPassword } = passwordChangeInputs();
+  if (!currentPassword) {
+    setAccountStatus("Enter your current password first.");
+    return;
+  }
+  if (newPassword.length < 8) {
+    setAccountStatus("New password needs at least 8 characters.");
+    return;
+  }
+  if (newPassword !== confirmNewPassword) {
+    setAccountStatus("New passwords do not match. Re-enter both new password fields.");
+    return;
+  }
+
+  try {
+    elements.changePasswordButton.disabled = true;
+    const credential = globalThis.firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+    elements.currentPasswordInput.value = "";
+    elements.newPasswordInput.value = "";
+    elements.confirmNewPasswordInput.value = "";
+    setAccountStatus("Password changed. Use the new password next time you sign in.");
+  } catch (error) {
+    setAccountStatus(authErrorMessage(error, "Change password"));
+  } finally {
+    updateAccountUi();
+  }
 }
 
 async function refreshVerificationStatus(silent = false) {
@@ -501,10 +599,31 @@ function authErrorMessage(error, action) {
     return "Use a real email address, like name@example.com.";
   }
   if (code === "auth/weak-password") {
-    return "Password is too weak. Use at least 6 characters.";
+    return action === "Change password"
+      ? "New password is too weak. Use at least 8 characters."
+      : "Password is too weak. Use at least 6 characters.";
   }
-  if (code === "auth/wrong-password" || code === "auth/invalid-credential" || code === "auth/user-not-found") {
+  if (code === "auth/wrong-password") {
+    return action === "Change password"
+      ? "Current password is wrong."
+      : "Sign in failed. Check the email and password, or use Forgot Password.";
+  }
+  if (code === "auth/invalid-credential") {
+    return action === "Change password"
+      ? "Current password is wrong."
+      : "Sign in failed. Check the email and password, or use Forgot Password.";
+  }
+  if (code === "auth/user-not-found") {
     return "Sign in failed. Check the email and password, or use Forgot Password.";
+  }
+  if (code === "auth/requires-recent-login") {
+    return "For security, sign out and sign in again, then retry the password change.";
+  }
+  if (code === "auth/network-request-failed") {
+    return "Network request failed. Check your connection or browser blockers, then retry.";
+  }
+  if (code === "auth/operation-not-allowed") {
+    return "Email/password auth is not enabled. Enable it in Firebase Authentication > Sign-in method.";
   }
   if (code === "auth/too-many-requests") {
     return "Too many attempts. Wait a bit, then try again.";
@@ -1550,9 +1669,13 @@ elements.createAccountButton.addEventListener("click", async () => {
   }
   try {
     const credential = await state.remote.auth.createUserWithEmailAndPassword(email, password);
-    await sendVerificationEmail(credential.user);
     elements.confirmPasswordInput.value = "";
-    setAccountStatus(`Account created. Verification email sent to ${email}. Open it, then return here.`);
+    try {
+      await sendVerificationEmail(credential.user);
+      setAccountStatus(verificationHelpText(email));
+    } catch (verificationError) {
+      setAccountStatus(`Account created, but verification email was not sent. ${authErrorMessage(verificationError, "Email verification")}`);
+    }
   } catch (error) {
     setAccountStatus(authErrorMessage(error, "Account creation"));
   }
@@ -1568,8 +1691,8 @@ elements.forgotPasswordButton.addEventListener("click", async () => {
     return;
   }
   try {
-    await state.remote.auth.sendPasswordResetEmail(email);
-    setAccountStatus(`Password reset email sent to ${email}.`);
+    await state.remote.auth.sendPasswordResetEmail(email, verificationActionSettings());
+    setAccountStatus(`Password reset email sent to ${email}. Check spam if it does not arrive in a few minutes.`);
   } catch (error) {
     setAccountStatus(authErrorMessage(error, "Password reset"));
   }
@@ -1579,9 +1702,13 @@ elements.verifyEmailButton.addEventListener("click", async () => {
   if (!user) {
     return;
   }
+  if (state.verificationCooldownUntil > Date.now()) {
+    updateAccountUi();
+    return;
+  }
   try {
     await sendVerificationEmail(user);
-    setAccountStatus(`Verification email sent to ${user.email}. Open it, then return here.`);
+    setAccountStatus(verificationHelpText(user.email));
   } catch (error) {
     setAccountStatus(authErrorMessage(error, "Email verification"));
   }
@@ -1589,6 +1716,7 @@ elements.verifyEmailButton.addEventListener("click", async () => {
 elements.refreshUserButton.addEventListener("click", async () => {
   await refreshVerificationStatus(false);
 });
+elements.changePasswordButton.addEventListener("click", changePassword);
 elements.signOutButton.addEventListener("click", async () => {
   if (state.remote.auth) {
     await state.remote.auth.signOut();

@@ -12,6 +12,18 @@ ClipboardStack Web works locally without Firebase. Use Firebase only when you wa
 6. Create a Firestore database.
 7. Paste `firestore.rules` into Firestore Rules and publish.
 
+## Email Verification Checklist
+
+If account creation works but verification or password reset email does not arrive:
+
+- Authentication > Sign-in method: Email/Password must be enabled.
+- Authentication > Settings > Authorized domains: add `yankaizhao322.github.io`.
+- Authentication > Templates: keep Email address verification and Password reset enabled/default.
+- Check spam, promotions, and delayed delivery before resending.
+- Spark plan limits are 1000 verification emails/day and 150 password reset emails/day.
+
+The app uses Firebase's free default email sender. If delivery is still unreliable later, the next upgrade is a custom sending domain or email provider.
+
 The config file should look like this:
 
 ```js

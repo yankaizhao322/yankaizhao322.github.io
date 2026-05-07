@@ -57,6 +57,18 @@
               <button id="signOutButton" type="button" hidden>Sign Out</button>
             </div>
           </form>
+          <div id="accountSettings" class="account-settings" hidden>
+            <h3>Account settings</h3>
+            <div class="auth-form">
+              <label for="currentPasswordInput">Current Password</label>
+              <input id="currentPasswordInput" type="password" autocomplete="current-password" placeholder="current password">
+              <label for="newPasswordInput">New Password</label>
+              <input id="newPasswordInput" type="password" autocomplete="new-password" minlength="8" placeholder="8+ characters">
+              <label for="confirmNewPasswordInput">Confirm New Password</label>
+              <input id="confirmNewPasswordInput" type="password" autocomplete="new-password" minlength="8" placeholder="repeat new password">
+              <button id="changePasswordButton" type="button">Change Password</button>
+            </div>
+          </div>
           <p id="accountLine" class="hint account-line">Remote sync needs Firebase config. Local history still works.</p>
         </div>
 
