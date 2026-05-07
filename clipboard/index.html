@@ -10,9 +10,10 @@
   <main class="shell">
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">ClipboardStack Web</p>
-        <h1>Clipboard, screenshots, and sync.</h1>
-        <p class="lede">Save text, paste screenshots, edit clips, and sync across browsers after email verification.</p>
+        <div class="hero-bar">
+          <h1>ClipboardStack Web - clipboard, screenshots, and sync.</h1>
+          <button id="accountOpenButton" type="button">Account</button>
+        </div>
         <div class="metric-row">
           <div>
             <strong id="metricTotal">0</strong>
@@ -36,47 +37,16 @@
 
     <section class="workspace" aria-label="ClipboardStack workspace">
       <aside class="capture-panel">
-        <div class="account-panel" aria-label="Account">
-          <div class="panel-head">
-            <h2>Account</h2>
-            <span id="syncPill" class="pill">Local only</span>
-          </div>
-          <form id="authForm" class="auth-form">
-            <label for="emailInput">Email</label>
-            <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com">
-            <label for="passwordInput">Password</label>
-            <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="6+ characters">
-            <label for="confirmPasswordInput">Confirm Password <span class="label-note">new accounts</span></label>
-            <input id="confirmPasswordInput" type="password" autocomplete="new-password" minlength="6" placeholder="repeat password before creating">
-            <div class="auth-actions">
-              <button id="signInButton" class="primary-button" type="submit">Sign In</button>
-              <button id="createAccountButton" type="button">Create Account</button>
-              <button id="forgotPasswordButton" type="button">Forgot Password</button>
-              <button id="verifyEmailButton" type="button" hidden>Verify Email</button>
-              <button id="refreshUserButton" type="button" hidden>Check Status</button>
-              <button id="signOutButton" type="button" hidden>Sign Out</button>
-            </div>
-          </form>
-          <div id="accountSettings" class="account-settings" hidden>
-            <h3>Account settings</h3>
-            <div class="auth-form">
-              <label for="currentPasswordInput">Current Password</label>
-              <input id="currentPasswordInput" type="password" autocomplete="current-password" placeholder="current password">
-              <label for="newPasswordInput">New Password</label>
-              <input id="newPasswordInput" type="password" autocomplete="new-password" minlength="8" placeholder="8+ characters">
-              <label for="confirmNewPasswordInput">Confirm New Password</label>
-              <input id="confirmNewPasswordInput" type="password" autocomplete="new-password" minlength="8" placeholder="repeat new password">
-              <button id="changePasswordButton" type="button">Change Password</button>
-            </div>
-          </div>
-          <p id="accountLine" class="hint account-line">Remote sync needs Firebase config. Local history still works.</p>
-        </div>
-
         <div class="panel-head">
           <h2>Capture</h2>
           <span id="permissionPill" class="pill">Browser gated</span>
         </div>
         <textarea id="clipInput" placeholder="Paste text here, read the clipboard, or capture a screenshot after granting browser permission." spellcheck="false"></textarea>
+        <div class="classification-field">
+          <label for="captureCategoryInput">Category</label>
+          <input id="captureCategoryInput" type="text" list="categoryOptions" placeholder="work, school, ideas">
+          <datalist id="categoryOptions"></datalist>
+        </div>
         <div class="capture-actions">
           <button id="saveTextButton" class="primary-button" type="button">Save Text</button>
           <button id="readClipboardButton" type="button">Read Clipboard</button>
@@ -108,8 +78,8 @@
         <p class="hint">Browsers require a click or paste before clipboard and screen capture access. This page cannot monitor your clipboard or screen in the background.</p>
 
         <div class="quick-actions" aria-label="Data actions">
-          <button id="exportButton" type="button">Export JSON</button>
-          <label class="file-button" for="importFile">Import JSON</label>
+          <button id="exportButton" type="button">Backup</button>
+          <label class="file-button" for="importFile">Restore</label>
           <input id="importFile" type="file" accept="application/json,.json">
           <button id="clearButton" class="danger-button" type="button">Clear</button>
         </div>
@@ -128,9 +98,17 @@
               <option value="text">Text</option>
               <option value="image">Screenshots</option>
               <option value="pinned">Pinned</option>
+              <option value="categorized">Categorized</option>
               <option value="today">Today</option>
             </select>
           </div>
+        </div>
+        <div id="bulkActions" class="bulk-actions" aria-label="Bulk clip actions">
+          <span id="selectionLine">0 selected</span>
+          <button id="selectAllButton" type="button">Select visible</button>
+          <button id="pinSelectedButton" type="button">Pin selected</button>
+          <button id="deleteSelectedButton" class="danger-button" type="button">Delete selected</button>
+          <button id="clearSelectionButton" type="button">Clear selection</button>
         </div>
         <div id="clipList" class="clip-list" aria-live="polite"></div>
       </section>
@@ -139,6 +117,10 @@
 
   <template id="clipTemplate">
     <article class="clip-card">
+      <label class="select-clip">
+        <input class="select-action" type="checkbox">
+        <span>Select</span>
+      </label>
       <div class="clip-meta">
         <span class="badge"></span>
         <time></time>
@@ -157,6 +139,47 @@
       </div>
     </article>
   </template>
+
+  <div id="accountModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" hidden>
+    <div class="modal-panel account-modal-panel">
+      <div class="modal-head">
+        <div>
+          <h2 id="accountModalTitle">Account</h2>
+          <span id="syncPill" class="pill">Local only</span>
+        </div>
+        <button id="accountCloseButton" type="button" aria-label="Close account">Close</button>
+      </div>
+      <form id="authForm" class="auth-form">
+        <label for="emailInput">Email</label>
+        <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com">
+        <label for="passwordInput">Password</label>
+        <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="6+ characters">
+        <label for="confirmPasswordInput">Confirm Password <span class="label-note">new accounts</span></label>
+        <input id="confirmPasswordInput" type="password" autocomplete="new-password" minlength="6" placeholder="repeat password before creating">
+        <div class="auth-actions">
+          <button id="signInButton" class="primary-button" type="submit">Sign In</button>
+          <button id="createAccountButton" type="button">Create Account</button>
+          <button id="forgotPasswordButton" type="button">Forgot Password</button>
+          <button id="verifyEmailButton" type="button" hidden>Verify Email</button>
+          <button id="refreshUserButton" type="button" hidden>Check Status</button>
+          <button id="signOutButton" type="button" hidden>Sign Out</button>
+        </div>
+      </form>
+      <div id="accountSettings" class="account-settings" hidden>
+        <h3>Account settings</h3>
+        <div class="auth-form">
+          <label for="currentPasswordInput">Current Password</label>
+          <input id="currentPasswordInput" type="password" autocomplete="current-password" placeholder="current password">
+          <label for="newPasswordInput">New Password</label>
+          <input id="newPasswordInput" type="password" autocomplete="new-password" minlength="8" placeholder="8+ characters">
+          <label for="confirmNewPasswordInput">Confirm New Password</label>
+          <input id="confirmNewPasswordInput" type="password" autocomplete="new-password" minlength="8" placeholder="repeat new password">
+          <button id="changePasswordButton" type="button">Change Password</button>
+        </div>
+      </div>
+      <p id="accountLine" class="hint account-line">Remote sync needs Firebase config. Local history still works.</p>
+    </div>
+  </div>
 
   <div id="imageEditor" class="modal" role="dialog" aria-modal="true" aria-labelledby="imageEditorTitle" hidden>
     <div class="modal-panel">

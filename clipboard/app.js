@@ -1,6 +1,6 @@
 const STORAGE_KEY = "clipboardstack.web.clips";
-const MAX_ITEMS = 120;
-const MAX_STORAGE_BYTES = 4 * 1024 * 1024;
+const MAX_ITEMS = 200;
+const MAX_STORAGE_BYTES = 8 * 1024 * 1024;
 const REMOTE_LIMIT = 120;
 const MAX_REMOTE_CLIP_BYTES = 900 * 1024;
 const MAX_TAGS = 8;
@@ -18,6 +18,7 @@ const state = {
   index: new Map(),
   query: "",
   filter: "all",
+  selectedIds: new Set(),
   remote: {
     available: false,
     auth: null,
@@ -44,6 +45,8 @@ const elements = {
   saveTextButton: document.querySelector("#saveTextButton"),
   readClipboardButton: document.querySelector("#readClipboardButton"),
   screenshotButton: document.querySelector("#screenshotButton"),
+  captureCategoryInput: document.querySelector("#captureCategoryInput"),
+  categoryOptions: document.querySelector("#categoryOptions"),
   shareCodeButton: document.querySelector("#shareCodeButton"),
   shareCodeLine: document.querySelector("#shareCodeLine"),
   retrieveCodeInput: document.querySelector("#retrieveCodeInput"),
@@ -63,6 +66,9 @@ const elements = {
   metricPinned: document.querySelector("#metricPinned"),
   metricBytes: document.querySelector("#metricBytes"),
   authForm: document.querySelector("#authForm"),
+  accountOpenButton: document.querySelector("#accountOpenButton"),
+  accountModal: document.querySelector("#accountModal"),
+  accountCloseButton: document.querySelector("#accountCloseButton"),
   emailInput: document.querySelector("#emailInput"),
   passwordInput: document.querySelector("#passwordInput"),
   confirmPasswordInput: document.querySelector("#confirmPasswordInput"),
@@ -79,6 +85,12 @@ const elements = {
   changePasswordButton: document.querySelector("#changePasswordButton"),
   syncPill: document.querySelector("#syncPill"),
   accountLine: document.querySelector("#accountLine"),
+  bulkActions: document.querySelector("#bulkActions"),
+  selectionLine: document.querySelector("#selectionLine"),
+  selectAllButton: document.querySelector("#selectAllButton"),
+  pinSelectedButton: document.querySelector("#pinSelectedButton"),
+  deleteSelectedButton: document.querySelector("#deleteSelectedButton"),
+  clearSelectionButton: document.querySelector("#clearSelectionButton"),
   imageEditor: document.querySelector("#imageEditor"),
   editorCanvas: document.querySelector("#editorCanvas"),
   editorStatus: document.querySelector("#editorStatus"),
@@ -143,6 +155,15 @@ function normalizeTags(tags) {
 
 function parseTags(value) {
   return normalizeTags(String(value || "").split(","));
+}
+
+function currentCategory() {
+  return String(elements.captureCategoryInput.value || "").trim().slice(0, 80);
+}
+
+function categoryOptions() {
+  return [...new Set(state.clips.map((clip) => clip.folder).filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right));
 }
 
 function cloneShareClip(clip) {
@@ -379,6 +400,9 @@ function updateAccountUi() {
   elements.syncPill.textContent = signedIn
     ? (needsVerification ? "Verify email" : "Synced")
     : (state.remote.available ? "Ready" : "Local only");
+  elements.accountOpenButton.textContent = signedIn
+    ? (needsVerification ? "Verify Account" : "Account Synced")
+    : "Account";
   if (!state.remote.available) {
     elements.accountLine.textContent = "Add Firebase config to enable free remote accounts. Local history still works.";
   }
@@ -476,6 +500,7 @@ async function addTextClip(text) {
     text: normalized,
     imageData: "",
     title: "",
+    folder: currentCategory(),
     digest: await digestValue(`text:${normalized}`),
   });
 }
@@ -486,6 +511,7 @@ async function addImageClip(imageData, title) {
     text: "",
     imageData,
     title,
+    folder: currentCategory(),
     digest: await digestValue(`image:${imageData}`),
   });
 }
@@ -649,7 +675,7 @@ async function clipFromCaptureOrLatest() {
       text,
       imageData: "",
       title: "",
-      folder: "",
+      folder: currentCategory(),
       tags: [],
       digest: await digestValue(`text:${text}`),
       pinned: false,
@@ -759,6 +785,7 @@ async function addClip(partial) {
     const existing = state.clips[existingPosition];
     existing.createdAt = new Date().toISOString();
     existing.title = partial.title || existing.title;
+    existing.folder = partial.folder || existing.folder;
     state.clips.splice(existingPosition, 1);
     state.clips.unshift(existing);
     changedClip = existing;
@@ -890,10 +917,55 @@ function estimatedClipBytes(clip) {
 function deleteClip(id) {
   const clip = state.clips.find((item) => item.id === id);
   state.clips = state.clips.filter((clip) => clip.id !== id);
+  state.selectedIds.delete(id);
   rebuildIndex();
   persistWithQuotaTrim();
   deleteRemoteClip(clip);
   setStatus("Clip deleted.");
+  render();
+}
+
+function selectVisibleClips() {
+  filteredClips().forEach((clip) => state.selectedIds.add(clip.id));
+  render();
+}
+
+function clearSelection() {
+  state.selectedIds.clear();
+  render();
+}
+
+function pinSelectedClips() {
+  const selected = new Set(state.selectedIds);
+  let changed = false;
+  state.clips.forEach((clip) => {
+    if (selected.has(clip.id) && !clip.pinned) {
+      clip.pinned = true;
+      saveRemoteClip(clip);
+      changed = true;
+    }
+  });
+  if (!changed) {
+    setStatus("Selected clips are already pinned.");
+    return;
+  }
+  persistWithQuotaTrim();
+  setStatus(`Pinned ${selected.size} selected clips.`);
+  render();
+}
+
+function deleteSelectedClips() {
+  const selected = new Set(state.selectedIds);
+  if (!selected.size) {
+    return;
+  }
+  const removed = state.clips.filter((clip) => selected.has(clip.id));
+  state.clips = state.clips.filter((clip) => !selected.has(clip.id));
+  state.selectedIds.clear();
+  rebuildIndex();
+  persistWithQuotaTrim();
+  removed.forEach(deleteRemoteClip);
+  setStatus(`Deleted ${removed.length} selected clips.`);
   render();
 }
 
@@ -1091,6 +1163,9 @@ function filteredClips() {
     if (state.filter === "pinned" && !clip.pinned) {
       return false;
     }
+    if (state.filter === "categorized" && !clip.folder) {
+      return false;
+    }
     if (state.filter === "today" && new Date(clip.createdAt).toDateString() !== today) {
       return false;
     }
@@ -1104,6 +1179,16 @@ function searchableText(clip) {
 
 function render() {
   elements.clipList.replaceChildren();
+  for (const id of [...state.selectedIds]) {
+    if (!state.clips.some((clip) => clip.id === id)) {
+      state.selectedIds.delete(id);
+    }
+  }
+  elements.categoryOptions.replaceChildren(...categoryOptions().map((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    return option;
+  }));
   const visible = filteredClips();
 
   if (!visible.length) {
@@ -1116,6 +1201,7 @@ function render() {
   for (const clip of visible) {
     const fragment = elements.clipTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".clip-card");
+    const selectInput = fragment.querySelector(".select-action");
     const badge = fragment.querySelector(".badge");
     const time = fragment.querySelector("time");
     const title = fragment.querySelector(".clip-title");
@@ -1130,6 +1216,16 @@ function render() {
     const deleteButton = fragment.querySelector(".delete-action");
 
     card.classList.toggle("is-pinned", clip.pinned);
+    card.classList.toggle("is-selected", state.selectedIds.has(clip.id));
+    selectInput.checked = state.selectedIds.has(clip.id);
+    selectInput.addEventListener("change", () => {
+      if (selectInput.checked) {
+        state.selectedIds.add(clip.id);
+      } else {
+        state.selectedIds.delete(clip.id);
+      }
+      render();
+    });
     badge.textContent = clip.pinned ? "Pinned" : `${clip.kind}:${clip.digest.replace("fnv:", "").slice(0, 8)}`;
     time.dateTime = clip.createdAt;
     time.textContent = new Intl.DateTimeFormat(undefined, {
@@ -1185,6 +1281,16 @@ function render() {
   }
 
   renderMetrics();
+  renderSelectionUi(visible);
+}
+
+function renderSelectionUi(visible) {
+  const selectedCount = state.selectedIds.size;
+  elements.selectionLine.textContent = `${selectedCount} selected`;
+  elements.pinSelectedButton.disabled = selectedCount === 0;
+  elements.deleteSelectedButton.disabled = selectedCount === 0;
+  elements.clearSelectionButton.disabled = selectedCount === 0;
+  elements.selectAllButton.disabled = visible.length === 0;
 }
 
 function renderMetrics() {
@@ -1205,6 +1311,14 @@ function formatBytes(bytes) {
 
 function setStatus(message) {
   elements.statusLine.textContent = message;
+}
+
+function openAccountModal() {
+  elements.accountModal.hidden = false;
+}
+
+function closeAccountModal() {
+  elements.accountModal.hidden = true;
 }
 
 function defaultClipTitle(clip) {
@@ -1309,6 +1423,7 @@ function exportJson() {
   link.download = `clipboardstack-${new Date().toISOString().slice(0, 10)}.json`;
   link.click();
   URL.revokeObjectURL(url);
+  setStatus("Backup downloaded.");
 }
 
 function importJson(file) {
@@ -1628,6 +1743,13 @@ async function saveImageEditor() {
 }
 
 elements.saveTextButton.addEventListener("click", () => addTextClip(elements.clipInput.value));
+elements.accountOpenButton.addEventListener("click", openAccountModal);
+elements.accountCloseButton.addEventListener("click", closeAccountModal);
+elements.accountModal.addEventListener("click", (event) => {
+  if (event.target === elements.accountModal) {
+    closeAccountModal();
+  }
+});
 elements.authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!state.remote.available) {
@@ -1759,12 +1881,17 @@ elements.screenshotPreset.addEventListener("change", () => {
 elements.exportButton.addEventListener("click", exportJson);
 elements.clearButton.addEventListener("click", () => {
   state.clips = [];
+  state.selectedIds.clear();
   rebuildIndex();
   persistWithQuotaTrim();
   clearRemoteClips();
   setStatus("History cleared.");
   render();
 });
+elements.selectAllButton.addEventListener("click", selectVisibleClips);
+elements.pinSelectedButton.addEventListener("click", pinSelectedClips);
+elements.deleteSelectedButton.addEventListener("click", deleteSelectedClips);
+elements.clearSelectionButton.addEventListener("click", clearSelection);
 elements.importFile.addEventListener("change", (event) => {
   const [file] = event.target.files;
   if (file) {

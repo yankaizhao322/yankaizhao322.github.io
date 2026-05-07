@@ -82,7 +82,7 @@ button:disabled:hover {
 .shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 42px 0;
+  padding: 30px 0;
 }
 
 .hero {
@@ -93,10 +93,13 @@ button:disabled:hover {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 18px 0 4px;
+  align-items: center;
+  padding: 8px 0 4px;
+  text-align: center;
 }
 
 .eyebrow {
+  display: none;
   margin: 0 0 16px;
   color: var(--accent-strong);
   font-size: 0.82rem;
@@ -112,11 +115,22 @@ p {
 }
 
 h1 {
-  max-width: 860px;
-  margin-bottom: 10px;
-  font-size: clamp(2.2rem, 4vw, 4.1rem);
-  line-height: 1.02;
+  margin-bottom: 0;
+  font-size: clamp(2rem, 3.4vw, 3.3rem);
+  line-height: 1.08;
   letter-spacing: 0;
+}
+
+.hero-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+}
+
+.hero-bar h1 {
+  text-align: center;
 }
 
 h2 {
@@ -125,6 +139,7 @@ h2 {
 }
 
 .lede {
+  display: none;
   max-width: 680px;
   margin-bottom: 18px;
   color: var(--muted);
@@ -144,16 +159,19 @@ h2 {
 .metric-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(140px, 1fr));
-  gap: 10px;
-  max-width: 920px;
+  gap: 12px;
+  width: 100%;
+  max-width: 1100px;
+  margin-top: 18px;
 }
 
 .metric-row div {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 12px;
+  padding: 16px 18px;
   background: rgba(255, 255, 255, 0.72);
+  text-align: left;
 }
 
 .metric-row strong,
@@ -163,7 +181,7 @@ h2 {
 
 .metric-row strong {
   overflow-wrap: anywhere;
-  font-size: 1.25rem;
+  font-size: 1.55rem;
 }
 
 .metric-row span {
@@ -216,7 +234,7 @@ h2 {
 
 textarea {
   width: 100%;
-  min-height: 220px;
+  min-height: 280px;
   resize: vertical;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -257,6 +275,28 @@ textarea {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
+}
+
+.classification-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.classification-field label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.classification-field input {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--surface);
 }
 
 .account-settings {
@@ -421,11 +461,53 @@ select:focus {
   gap: 12px;
 }
 
+.bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+}
+
+.bulk-actions span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.bulk-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.86rem;
+}
+
 .clip-card {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
   background: rgba(255, 255, 255, 0.78);
+}
+
+.clip-card.is-selected {
+  border-color: rgba(31, 122, 92, 0.55);
+  box-shadow: 0 0 0 3px rgba(31, 122, 92, 0.12);
+}
+
+.select-clip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.select-clip input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
 }
 
 .clip-card.is-pinned {
@@ -580,6 +662,18 @@ button[hidden] {
   overflow: hidden;
 }
 
+.account-modal-panel {
+  width: min(520px, 100%);
+  grid-template-rows: auto auto auto auto;
+  padding-bottom: 18px;
+}
+
+.account-modal-panel .auth-form,
+.account-modal-panel .account-settings,
+.account-modal-panel .account-line {
+  margin-inline: 18px;
+}
+
 .modal-head {
   display: flex;
   align-items: flex-start;
@@ -682,6 +776,10 @@ button[hidden] {
     grid-template-columns: 1fr;
   }
 
+  .hero-bar {
+    grid-template-columns: 1fr;
+  }
+
   .toolbar,
   .filters {
     flex-direction: column;
@@ -710,6 +808,10 @@ button[hidden] {
   }
 
   .metric-row {
+    grid-template-columns: 1fr;
+  }
+
+  .classification-field {
     grid-template-columns: 1fr;
   }
 
