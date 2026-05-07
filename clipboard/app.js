@@ -81,6 +81,7 @@ const elements = {
   verifyEmailButton: document.querySelector("#verifyEmailButton"),
   refreshUserButton: document.querySelector("#refreshUserButton"),
   signOutButton: document.querySelector("#signOutButton"),
+  verificationNotice: document.querySelector("#verificationNotice"),
   accountSettings: document.querySelector("#accountSettings"),
   currentPasswordInput: document.querySelector("#currentPasswordInput"),
   newPasswordInput: document.querySelector("#newPasswordInput"),
@@ -433,6 +434,7 @@ function updateAccountUi() {
     : "Verify Email";
   elements.refreshUserButton.hidden = !needsVerification;
   elements.signOutButton.hidden = !signedIn;
+  elements.verificationNotice.hidden = !needsVerification;
   elements.accountSettings.hidden = !signedIn;
   elements.emailInput.disabled = signedIn || !state.remote.available;
   elements.passwordInput.disabled = signedIn || !state.remote.available;
@@ -449,6 +451,8 @@ function updateAccountUi() {
     : "Account";
   if (!state.remote.available) {
     elements.accountLine.textContent = "Add Firebase config to enable free remote accounts. Local history still works.";
+  } else if (needsVerification) {
+    elements.accountLine.textContent = verificationHelpText(state.remote.user.email);
   }
 }
 
@@ -457,7 +461,7 @@ function setAccountStatus(message) {
 }
 
 function verificationHelpText(email) {
-  return `Verification email sent to ${email}. Check spam, confirm the email address is spelled correctly, wait a few minutes, then resend if needed.`;
+  return `Verification email sent to ${email}. Check your inbox and spam folder, confirm the address is spelled correctly, and wait a few minutes before resending. Do not click unexpected links; only use the verification email you requested from ClipboardStack.`;
 }
 
 function scheduleVerificationCooldownTick() {
@@ -651,7 +655,7 @@ async function refreshVerificationStatus(silent = false) {
     if (refreshed?.emailVerified) {
       await handleAuthState(refreshed);
     } else if (!silent) {
-      setAccountStatus(`Still waiting for ${refreshed.email} to verify email.`);
+      setAccountStatus(`Still waiting for ${refreshed.email} to verify email. Check spam and use only the verification email you requested from ClipboardStack.`);
     }
   } catch {
     if (!silent) {
@@ -1330,8 +1334,8 @@ function render() {
       editButton.textContent = "Annotate / Crop";
       editButton.addEventListener("click", () => openImageEditor(clip));
     } else {
-      pre.hidden = true;
-      pre.textContent = "";
+      pre.hidden = false;
+      pre.textContent = clip.text;
       image.hidden = true;
       downloadButton.hidden = true;
       copyButton.textContent = "Copy";

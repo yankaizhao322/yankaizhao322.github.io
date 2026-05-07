@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <div class="brand-mark" aria-hidden="true">
+    <span class="brand-icon"></span>
+    <span>ClipboardStack</span>
+  </div>
   <main class="shell">
     <section class="hero">
       <div class="hero-copy">
@@ -165,7 +169,13 @@
           <button id="refreshUserButton" type="button" hidden>Check Status</button>
           <button id="signOutButton" type="button" hidden>Sign Out</button>
         </div>
+        <p class="auth-help">New accounts require email verification. Check your inbox and spam folder. Do not click unexpected links.</p>
       </form>
+      <div id="verificationNotice" class="verification-notice" hidden>
+        <h3>Email verification required</h3>
+        <p>Check your inbox and spam folder for the verification email. Remote sync stays off until your email is verified.</p>
+        <p class="security-note">Do not click unexpected links. Only use the verification email you requested from ClipboardStack.</p>
+      </div>
       <div id="accountSettings" class="account-settings" hidden>
         <h3>Account settings</h3>
         <div class="auth-form">
