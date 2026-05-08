@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Yankai Zhao | AI/ML Research</title>
-  <meta name="description" content="Yankai Zhao is a Computer Engineering graduate student at Lehigh University working on AI/ML, quantitative research, risk modeling, financial forecasting, healthcare time series, pixel generation, and human-centered AI tools.">
+  <title>Yankai Zhao | Applied AI Systems</title>
+  <meta name="description" content="Yankai Zhao is a Computer Engineering graduate student at Lehigh University building applied AI systems, quantitative models, browser tools, financial forecasting workflows, healthcare time-series models, and pixel generation projects.">
   <meta name="author" content="Yankai Zhao">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://yankaizhao322.github.io/">
-  <meta property="og:title" content="Yankai Zhao | AI/ML Research">
-  <meta property="og:description" content="AI/ML and quantitative research portfolio: credit risk, financial forecasting, healthcare time series, reinforcement learning, Easy Input Tool, and a pixel character generator.">
+  <meta property="og:title" content="Yankai Zhao | Applied AI Systems">
+  <meta property="og:description" content="Applied AI systems portfolio: credit risk, financial forecasting, healthcare time series, reinforcement learning, Easy Input Tool, ClipboardStack, and a pixel character generator.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yankaizhao322.github.io/">
   <script type="application/ld+json">
@@ -31,7 +31,7 @@
       },
       "knowsAbout": [
         "Machine Learning",
-        "Quantitative Research",
+        "Quantitative Modeling",
         "Credit Risk Modeling",
         "Financial Forecasting",
         "Healthcare Time Series",
@@ -42,12 +42,15 @@
   <style>
     :root {
       color-scheme: light;
-      --ink: #111111;
-      --muted: #555555;
-      --line: #e6e6e6;
+      --ink: #151b2c;
+      --muted: #647084;
+      --line: #dfe6f0;
       --paper: #ffffff;
-      --accent: #1f5eff;
-      --heading: #12315f;
+      --soft: #f6f9fd;
+      --accent: #246bfe;
+      --accent-soft: #e9f0ff;
+      --heading: #0f3266;
+      --shadow: 0 18px 50px rgba(31, 57, 92, 0.12);
     }
 
     * { box-sizing: border-box; }
@@ -59,9 +62,12 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       color: var(--ink);
-      background: var(--paper);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(36, 107, 254, 0.12), transparent 28%),
+        radial-gradient(circle at 90% 18%, rgba(15, 50, 102, 0.08), transparent 24%),
+        linear-gradient(180deg, #f9fbff 0%, #ffffff 42%, #f7faff 100%);
     }
 
     a {
@@ -71,9 +77,9 @@
     }
 
     .site {
-      width: min(1040px, calc(100vw - 36px));
+      width: min(1180px, calc(100vw - 42px));
       margin: 0 auto;
-      padding: 28px 0 54px;
+      padding: 28px 0 64px;
     }
 
     .topbar {
@@ -81,7 +87,7 @@
       justify-content: flex-end;
       align-items: center;
       gap: 24px;
-      padding-bottom: 34px;
+      padding-bottom: 30px;
     }
 
     .brand {
@@ -112,19 +118,64 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      gap: 18px;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      gap: 10px;
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .nav a {
-      color: var(--ink);
+      padding: 8px 12px;
+      color: #24324a;
       text-decoration: none;
+      border-radius: 999px;
     }
 
     .nav a:hover {
-      color: var(--accent);
+      color: var(--heading);
+      background: rgba(36, 107, 254, 0.08);
+    }
+
+    .tool-dock {
+      position: fixed;
+      top: 50%;
+      right: 22px;
+      z-index: 20;
+      display: grid;
+      gap: 4px;
+      width: 138px;
+      padding: 8px;
+      transform: translateY(-50%);
+      border: 1px solid rgba(191, 203, 222, 0.72);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 18px 46px rgba(31, 57, 92, 0.16);
+      backdrop-filter: blur(14px);
+    }
+
+    .tool-dock-label {
+      padding: 4px 8px 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tool-dock a {
+      display: flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 7px 9px;
+      border-radius: 7px;
+      color: #20314f;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .tool-dock a:hover {
+      color: #ffffff;
+      background: var(--heading);
     }
 
     .layout {
@@ -132,8 +183,8 @@
     }
 
     .section {
-      padding: 34px 0;
-      border-bottom: 1px solid var(--line);
+      padding: 42px 0;
+      border-bottom: 1px solid rgba(164, 181, 207, 0.38);
     }
 
     .section:first-child {
@@ -142,9 +193,14 @@
 
     .intro {
       display: grid;
-      grid-template-columns: 360px minmax(0, 1fr);
-      gap: 48px;
+      grid-template-columns: 420px minmax(0, 1fr);
+      gap: 56px;
       align-items: start;
+    }
+
+    .portrait-panel {
+      display: grid;
+      gap: 16px;
     }
 
     .portrait {
@@ -152,8 +208,13 @@
       aspect-ratio: 4 / 5;
       object-fit: cover;
       object-position: center 38%;
-      border: 1px solid var(--line);
-      filter: grayscale(10%);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      filter: saturate(1.02) contrast(1.02);
+    }
+
+    .identity {
+      padding: 0 2px;
     }
 
     h1,
@@ -165,27 +226,25 @@
 
     h1 {
       max-width: none;
-      margin: 30px 0 18px;
+      margin: 48px 0 18px;
       color: var(--heading);
-      font-size: clamp(44px, 5vw, 64px);
-      line-height: 1.08;
+      font-size: clamp(44px, 5.2vw, 72px);
+      line-height: 0.98;
       letter-spacing: 0;
     }
 
     h2 {
       margin-bottom: 18px;
       color: var(--heading);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      font-size: 30px;
+      font-size: 34px;
       line-height: 1.15;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: 0;
     }
 
     h3 {
       margin-bottom: 6px;
       color: #18233f;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       font-size: 16px;
       line-height: 1.25;
       letter-spacing: 0;
@@ -197,13 +256,15 @@
     .plain-list li,
     .news-item {
       color: #242424;
-      font-size: 17px;
-      line-height: 1.7;
+      font-size: 16px;
+      line-height: 1.72;
     }
 
     .bio-text {
-      max-width: 680px;
+      max-width: 720px;
       margin-bottom: 24px;
+      color: #263247;
+      font-size: 18px;
     }
 
     .section-text {
@@ -239,10 +300,14 @@
       display: flex;
       flex-wrap: wrap;
       gap: 18px;
-      margin-top: 24px;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      margin-top: 0;
       font-size: 15px;
       font-weight: 700;
+    }
+
+    .contact-links a {
+      color: var(--heading);
+      text-decoration-color: rgba(36, 107, 254, 0.38);
     }
 
     .news {
@@ -255,6 +320,7 @@
       grid-template-columns: 74px minmax(0, 1fr);
       gap: 14px;
       align-items: baseline;
+      padding: 10px 0;
     }
 
     .date {
@@ -275,63 +341,87 @@
       align-items: center;
       min-height: 30px;
       padding: 4px 10px;
-      border: 1px solid #b9c9e8;
+      border: 1px solid rgba(36, 107, 254, 0.18);
+      border-radius: 999px;
       color: var(--heading);
-      background: #f6f9ff;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: rgba(36, 107, 254, 0.07);
       font-size: 14px;
       font-weight: 700;
     }
 
     .grid {
       display: grid;
-      gap: 22px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
     }
 
     .project {
       display: grid;
-      gap: 8px;
-      padding-bottom: 22px;
-      border-bottom: 1px solid var(--line);
+      align-content: start;
+      gap: 12px;
+      min-height: 100%;
+      padding: 22px;
+      border: 1px solid rgba(193, 204, 222, 0.72);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 14px 34px rgba(31, 57, 92, 0.08);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .project:hover {
+      transform: translateY(-2px);
+      border-color: rgba(36, 107, 254, 0.38);
+      box-shadow: 0 20px 42px rgba(31, 57, 92, 0.12);
     }
 
     .project h3 {
-      font-size: 18px;
-      color: #111111;
+      min-height: 44px;
+      margin-bottom: 0;
+      color: #0f2e5f;
+      font-size: 17px;
+      font-weight: 900;
     }
 
     .project:last-child {
-      border-bottom: 0;
-      padding-bottom: 0;
+      padding-bottom: 18px;
     }
 
     .meta.updated {
       color: var(--muted);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .project-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 8px;
       align-items: center;
       margin-top: 4px;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
     }
 
     .project-link {
       display: inline-flex;
       width: fit-content;
+      min-height: 30px;
+      align-items: center;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--heading);
+      text-decoration: none;
+    }
+
+    .project-link:hover {
+      color: #ffffff;
+      background: var(--accent);
     }
 
     footer {
       padding-top: 24px;
       color: var(--muted);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       font-size: 13px;
     }
 
@@ -339,6 +429,22 @@
       .intro {
         grid-template-columns: 1fr;
         gap: 28px;
+      }
+
+      .tool-dock {
+        position: static;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: auto;
+        margin-bottom: 24px;
+        transform: none;
+      }
+
+      .tool-dock a {
+        min-width: 0;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .portrait {
@@ -363,16 +469,30 @@
       .nav {
         justify-content: flex-start;
       }
+
+      .tool-dock,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project h3 {
+        min-height: 0;
+      }
     }
   </style>
 </head>
 <body>
+  <aside class="tool-dock" aria-label="Tools">
+    <span class="tool-dock-label">Tools</span>
+    <a href="https://yankaizhao322.github.io/clipboard/">Clipboard</a>
+    <a href="https://yankaizhao322.github.io/Easy-Input-Tool/">Easy Input</a>
+    <a href="https://pixel-style-character-generator.streamlit.app/">Pixel Generator</a>
+  </aside>
   <main class="site">
     <header class="topbar">
       <nav class="nav" aria-label="Primary">
-        <a href="#research">Research</a>
+        <a href="#research">Interests</a>
         <a href="#projects">Projects</a>
-        <a href="#education">Education</a>
         <a href="#contact">Contact</a>
       </nav>
     </header>
@@ -381,42 +501,28 @@
       <div>
         <section class="section" id="bio">
           <div class="intro">
-            <img class="portrait" src="./assets/yankai-zhao.jpg" alt="Yankai Zhao">
-            <div class="intro-copy">
+            <div class="portrait-panel">
+              <img class="portrait" src="./assets/yankai-zhao.jpg" alt="Yankai Zhao">
+              <div class="identity">
               <p class="name">Yankai Zhao</p>
-              <p class="role">AI/ML · quantitative research · Lehigh University</p>
+              <p class="role">AI/ML · applied AI systems · Lehigh University</p>
+              </div>
+              <div class="contact-links" id="contact">
+                <a href="mailto:zhaoyankai18514473503@gmail.com">zhaoyankai18514473503@gmail.com</a>
+                <a href="https://github.com/yankaizhao322">GitHub</a>
+              </div>
+            </div>
+            <div class="intro-copy">
               <h1>I build applied AI systems.</h1>
               <p class="bio-text">
                 I am Yankai Zhao, a Computer Engineering master's student at Lehigh University focused on
-                machine learning, quantitative research, and AI products. My work spans credit default
+                machine learning, quantitative modeling, and AI products. My work spans credit default
                 prediction, financial forecasting with sentiment and sequence models, healthcare movement
                 classification, reinforcement learning, and browser-based language tools. I am especially
                 interested in turning noisy real-world data into systems that people can interpret, trust,
                 and actually use.
               </p>
             </div>
-          </div>
-          <div class="education-summary split" id="education">
-            <div>
-              <h3>Lehigh University</h3>
-              <p class="section-text">M.E. in Computer Engineering, expected May 2026.</p>
-              <p class="meta">
-                Coursework includes Machine Learning, Statistical Decision Making, Deep & Generative Learning,
-                Data Mining, Reinforcement Learning, Advanced Algorithms, Cloud Services, and Database Theory.
-              </p>
-            </div>
-            <div>
-              <h3>Technical Stack</h3>
-              <ul class="plain-list">
-                <li>Python, PyTorch, SQL, Java, C/C++</li>
-                <li>XGBoost, Random Forest, Logistic Regression, Transformers, CNN/RNN/GAN</li>
-                <li>AWS, Kubernetes, RESTful APIs, data pipelines</li>
-              </ul>
-            </div>
-          </div>
-          <div class="contact-links" id="contact">
-            <a href="mailto:zhaoyankai18514473503@gmail.com">zhaoyankai18514473503@gmail.com</a>
-            <a href="https://github.com/yankaizhao322">GitHub</a>
           </div>
         </section>
 
@@ -430,7 +536,7 @@
         </section>
 
         <section class="section" id="research">
-          <h2>Research Interests</h2>
+          <h2>Technical Interests</h2>
           <p class="section-text">
             My interests sit at the intersection of machine learning systems, decision modeling, and
             practical AI products. I am especially interested in risk-aware models, explainable prediction,
