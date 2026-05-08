@@ -16,7 +16,10 @@
             <span>ClipboardStack</span>
             <span class="title-sub">clipboard, screenshots, and sync</span>
           </h1>
-          <button id="accountOpenButton" type="button">Account</button>
+          <div class="top-actions">
+            <button id="helpOpenButton" type="button">Help</button>
+            <button id="accountOpenButton" type="button">Account</button>
+          </div>
         </div>
         <div class="metric-row">
           <div>
@@ -86,14 +89,13 @@
           </div>
           <div class="filters">
             <input id="searchInput" type="search" placeholder="Search clips">
-            <input id="dateFilterInput" type="date" aria-label="Filter clips by date">
+            <input id="dateFilterInput" type="text" inputmode="numeric" placeholder="MM/DD/YYYY" aria-label="Filter clips by date">
             <select id="filterSelect" aria-label="Filter clips">
               <option value="all">All clips</option>
               <option value="text">Text</option>
               <option value="image">Screenshots</option>
               <option value="pinned">Pinned</option>
               <option value="categorized">Categorized</option>
-              <option value="today">Today</option>
             </select>
           </div>
         </div>
@@ -148,6 +150,12 @@
         <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="6+ characters">
         <label for="confirmPasswordInput">Confirm Password <span class="label-note">new accounts</span></label>
         <input id="confirmPasswordInput" type="password" autocomplete="new-password" minlength="6" placeholder="repeat password before creating">
+        <div class="human-check">
+          <label for="humanAnswerInput">Human check <span id="humanQuestionText"></span></label>
+          <input id="humanAnswerInput" type="text" inputmode="numeric" autocomplete="off" placeholder="answer before creating">
+          <label class="bot-field" for="companyWebsiteInput">Company website</label>
+          <input id="companyWebsiteInput" class="bot-field" type="text" tabindex="-1" autocomplete="off">
+        </div>
         <div class="auth-actions">
           <button id="signInButton" class="primary-button" type="submit">Sign In</button>
           <button id="createAccountButton" type="button">Create Account</button>
@@ -174,8 +182,104 @@
           <input id="confirmNewPasswordInput" type="password" autocomplete="new-password" minlength="8" placeholder="repeat new password">
           <button id="changePasswordButton" type="button">Change Password</button>
         </div>
+        <div class="auth-form recovery-setup">
+          <h3>Recovery questions</h3>
+          <label for="recoveryQuestionOne">Question 1</label>
+          <select id="recoveryQuestionOne">
+            <option value="first-project">What was your first saved project?</option>
+            <option value="favorite-tool">What tool do you use most often?</option>
+            <option value="school">What school is connected to this account?</option>
+          </select>
+          <input id="recoveryAnswerOne" type="text" autocomplete="off" placeholder="Answer 1">
+          <label for="recoveryQuestionTwo">Question 2</label>
+          <select id="recoveryQuestionTwo">
+            <option value="favorite-tool">What tool do you use most often?</option>
+            <option value="first-project">What was your first saved project?</option>
+            <option value="school">What school is connected to this account?</option>
+          </select>
+          <input id="recoveryAnswerTwo" type="text" autocomplete="off" placeholder="Answer 2">
+          <button id="saveRecoveryButton" type="button">Save Recovery Questions</button>
+          <p id="recoverySetupLine" class="auth-help">Answers are stored only in this browser before a reset email can be sent.</p>
+        </div>
       </div>
       <p id="accountLine" class="hint account-line">Remote sync needs Firebase config. Local history still works.</p>
+    </div>
+  </div>
+
+  <div id="forgotModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="forgotModalTitle" hidden>
+    <div class="modal-panel forgot-modal-panel">
+      <div class="modal-head">
+        <div>
+          <h2 id="forgotModalTitle">Reset password</h2>
+          <p class="modal-status">Answer your recovery questions, then receive a reset email.</p>
+        </div>
+        <button id="forgotCloseButton" type="button" aria-label="Close password reset">Close</button>
+      </div>
+      <div class="auth-form forgot-form">
+        <label for="forgotEmailInput">Email</label>
+        <input id="forgotEmailInput" type="email" autocomplete="email" placeholder="you@example.com">
+        <label for="forgotQuestionOne">Question 1</label>
+        <select id="forgotQuestionOne">
+          <option value="first-project">What was your first saved project?</option>
+          <option value="favorite-tool">What tool do you use most often?</option>
+          <option value="school">What school is connected to this account?</option>
+        </select>
+        <input id="forgotAnswerOne" type="text" autocomplete="off" placeholder="Answer 1">
+        <label for="forgotQuestionTwo">Question 2</label>
+        <select id="forgotQuestionTwo">
+          <option value="favorite-tool">What tool do you use most often?</option>
+          <option value="first-project">What was your first saved project?</option>
+          <option value="school">What school is connected to this account?</option>
+        </select>
+        <input id="forgotAnswerTwo" type="text" autocomplete="off" placeholder="Answer 2">
+        <div class="human-check">
+          <label for="forgotHumanAnswerInput">Human check <span id="forgotHumanQuestionText"></span></label>
+          <input id="forgotHumanAnswerInput" type="text" inputmode="numeric" autocomplete="off" placeholder="answer before reset">
+          <label class="bot-field" for="forgotCompanyWebsiteInput">Company website</label>
+          <input id="forgotCompanyWebsiteInput" class="bot-field" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <button id="sendResetButton" class="primary-button" type="button">Send reset email</button>
+        <p id="forgotLine" class="auth-help">Check spam if the email does not arrive. Do not click unexpected links.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" hidden>
+    <div class="modal-panel help-modal-panel">
+      <div class="modal-head">
+        <div>
+          <h2 id="helpModalTitle">ClipboardStack help</h2>
+          <p class="modal-status">A quick guide to every tool on this page.</p>
+        </div>
+        <button id="helpCloseButton" type="button" aria-label="Close help">Close</button>
+      </div>
+      <div class="help-content">
+        <section>
+          <h3>Capture</h3>
+          <p>Paste text, read the browser clipboard, or take a screenshot. Screenshots can be resized before saving.</p>
+        </section>
+        <section>
+          <h3>History</h3>
+          <p>Saved clips appear newest first. Use search, date filter, type filter, pin, copy, edit, details, or delete.</p>
+        </section>
+        <section>
+          <h3>Code transfer</h3>
+          <p>Select clips or type content, generate a short code, then retrieve it from another browser within one hour.</p>
+        </section>
+        <section>
+          <h3>Account</h3>
+          <p>Create an account, verify email, sync clips remotely, change password, and save recovery questions.</p>
+        </section>
+        <section>
+          <h3>Backup</h3>
+          <p>Export local clips to JSON or restore them later. Clear removes local history from this browser.</p>
+        </section>
+        <section>
+          <h3>Contact</h3>
+          <p>Email: <a href="mailto:zhaoyankai18514473503@gmail.com">zhaoyankai18514473503@gmail.com</a></p>
+          <p>GitHub: <a href="https://github.com/yankaizhao322" target="_blank" rel="noreferrer">github.com/yankaizhao322</a></p>
+        </section>
+      </div>
     </div>
   </div>
 

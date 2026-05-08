@@ -1,4 +1,5 @@
 const STORAGE_KEY = "clipboardstack.web.clips";
+const RECOVERY_KEY = "clipboardstack.web.recovery";
 const MAX_ITEMS = 200;
 const MAX_STORAGE_BYTES = 8 * 1024 * 1024;
 const REMOTE_LIMIT = 120;
@@ -29,6 +30,10 @@ const state = {
   },
   verificationCooldownUntil: 0,
   verificationCooldownTimer: null,
+  human: {
+    registerExpected: null,
+    resetExpected: null,
+  },
   editor: {
     clip: null,
     mode: "draw",
@@ -70,14 +75,32 @@ const elements = {
   metricPinned: document.querySelector("#metricPinned"),
   metricBytes: document.querySelector("#metricBytes"),
   authForm: document.querySelector("#authForm"),
+  helpOpenButton: document.querySelector("#helpOpenButton"),
+  helpModal: document.querySelector("#helpModal"),
+  helpCloseButton: document.querySelector("#helpCloseButton"),
   accountOpenButton: document.querySelector("#accountOpenButton"),
   accountModal: document.querySelector("#accountModal"),
   accountCloseButton: document.querySelector("#accountCloseButton"),
   transferModal: document.querySelector("#transferModal"),
   transferCloseButton: document.querySelector("#transferCloseButton"),
+  forgotModal: document.querySelector("#forgotModal"),
+  forgotCloseButton: document.querySelector("#forgotCloseButton"),
+  forgotEmailInput: document.querySelector("#forgotEmailInput"),
+  forgotQuestionOne: document.querySelector("#forgotQuestionOne"),
+  forgotAnswerOne: document.querySelector("#forgotAnswerOne"),
+  forgotQuestionTwo: document.querySelector("#forgotQuestionTwo"),
+  forgotAnswerTwo: document.querySelector("#forgotAnswerTwo"),
+  forgotHumanQuestionText: document.querySelector("#forgotHumanQuestionText"),
+  forgotHumanAnswerInput: document.querySelector("#forgotHumanAnswerInput"),
+  forgotCompanyWebsiteInput: document.querySelector("#forgotCompanyWebsiteInput"),
+  sendResetButton: document.querySelector("#sendResetButton"),
+  forgotLine: document.querySelector("#forgotLine"),
   emailInput: document.querySelector("#emailInput"),
   passwordInput: document.querySelector("#passwordInput"),
   confirmPasswordInput: document.querySelector("#confirmPasswordInput"),
+  humanQuestionText: document.querySelector("#humanQuestionText"),
+  humanAnswerInput: document.querySelector("#humanAnswerInput"),
+  companyWebsiteInput: document.querySelector("#companyWebsiteInput"),
   signInButton: document.querySelector("#signInButton"),
   createAccountButton: document.querySelector("#createAccountButton"),
   forgotPasswordButton: document.querySelector("#forgotPasswordButton"),
@@ -90,6 +113,12 @@ const elements = {
   newPasswordInput: document.querySelector("#newPasswordInput"),
   confirmNewPasswordInput: document.querySelector("#confirmNewPasswordInput"),
   changePasswordButton: document.querySelector("#changePasswordButton"),
+  recoveryQuestionOne: document.querySelector("#recoveryQuestionOne"),
+  recoveryAnswerOne: document.querySelector("#recoveryAnswerOne"),
+  recoveryQuestionTwo: document.querySelector("#recoveryQuestionTwo"),
+  recoveryAnswerTwo: document.querySelector("#recoveryAnswerTwo"),
+  saveRecoveryButton: document.querySelector("#saveRecoveryButton"),
+  recoverySetupLine: document.querySelector("#recoverySetupLine"),
   syncPill: document.querySelector("#syncPill"),
   accountLine: document.querySelector("#accountLine"),
   bulkActions: document.querySelector("#bulkActions"),
@@ -114,6 +143,8 @@ const elements = {
 rebuildIndex();
 trimHistory();
 elements.screenshotMaxEdge.disabled = true;
+refreshHumanChallenge("register");
+refreshHumanChallenge("reset");
 initializeRemote();
 
 function loadRawClips() {
@@ -404,10 +435,12 @@ async function handleAuthState(user) {
   }
 
   if (!user.emailVerified) {
+    loadRecoveryIntoUi(user.email);
     setAccountStatus(`Signed in as ${user.email}. Verify your email before remote sync turns on.`);
     return;
   }
 
+  loadRecoveryIntoUi(user.email);
   setAccountStatus("Loading remote clips...");
   try {
     const remoteClips = await fetchRemoteClips();
@@ -446,6 +479,11 @@ function updateAccountUi() {
   elements.newPasswordInput.disabled = !signedIn || !state.remote.available;
   elements.confirmNewPasswordInput.disabled = !signedIn || !state.remote.available;
   elements.changePasswordButton.disabled = !signedIn || !state.remote.available;
+  elements.recoveryQuestionOne.disabled = !signedIn;
+  elements.recoveryQuestionTwo.disabled = !signedIn;
+  elements.recoveryAnswerOne.disabled = !signedIn;
+  elements.recoveryAnswerTwo.disabled = !signedIn;
+  elements.saveRecoveryButton.disabled = !signedIn;
   elements.syncPill.textContent = signedIn
     ? (needsVerification ? "Verify email" : "Synced")
     : (state.remote.available ? "Ready" : "Local only");
@@ -579,6 +617,108 @@ function authInputs() {
   };
 }
 
+function normalizedEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizeRecoveryAnswer(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function loadRecoveryStore() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECOVERY_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveRecoveryStore(store) {
+  localStorage.setItem(RECOVERY_KEY, JSON.stringify(store));
+}
+
+async function recoveryAnswerHash(email, question, answer) {
+  return digestValue(`recovery:${normalizedEmail(email)}:${question}:${normalizeRecoveryAnswer(answer)}`);
+}
+
+function recoveryForEmail(email) {
+  return loadRecoveryStore()[normalizedEmail(email)] || null;
+}
+
+async function saveRecoveryQuestions() {
+  const user = state.remote.auth?.currentUser;
+  if (!user?.email) {
+    setAccountStatus("Sign in before saving recovery questions.");
+    return;
+  }
+
+  const email = normalizedEmail(user.email);
+  const questionOne = elements.recoveryQuestionOne.value;
+  const questionTwo = elements.recoveryQuestionTwo.value;
+  const answerOne = normalizeRecoveryAnswer(elements.recoveryAnswerOne.value);
+  const answerTwo = normalizeRecoveryAnswer(elements.recoveryAnswerTwo.value);
+
+  if (questionOne === questionTwo) {
+    elements.recoverySetupLine.textContent = "Choose two different recovery questions.";
+    return;
+  }
+  if (!answerOne || !answerTwo) {
+    elements.recoverySetupLine.textContent = "Answer both recovery questions before saving.";
+    return;
+  }
+
+  const store = loadRecoveryStore();
+  store[email] = {
+    questionOne,
+    questionTwo,
+    answerOneHash: await recoveryAnswerHash(email, questionOne, answerOne),
+    answerTwoHash: await recoveryAnswerHash(email, questionTwo, answerTwo),
+    savedAt: new Date().toISOString(),
+  };
+  saveRecoveryStore(store);
+  elements.recoveryAnswerOne.value = "";
+  elements.recoveryAnswerTwo.value = "";
+  elements.recoverySetupLine.textContent = "Recovery questions saved in this browser.";
+}
+
+function loadRecoveryIntoUi(email) {
+  const saved = recoveryForEmail(email);
+  if (!saved) {
+    elements.recoverySetupLine.textContent = "Save two answers in this browser before using question-based password reset.";
+    return;
+  }
+  elements.recoveryQuestionOne.value = saved.questionOne;
+  elements.recoveryQuestionTwo.value = saved.questionTwo;
+  elements.recoverySetupLine.textContent = "Recovery questions are saved in this browser.";
+}
+
+function refreshHumanChallenge(kind) {
+  const left = 2 + Math.floor(Math.random() * 8);
+  const right = 2 + Math.floor(Math.random() * 8);
+  const expected = left + right;
+  if (kind === "reset") {
+    state.human.resetExpected = expected;
+    elements.forgotHumanQuestionText.textContent = `${left} + ${right} = ?`;
+    elements.forgotHumanAnswerInput.value = "";
+    elements.forgotCompanyWebsiteInput.value = "";
+    return;
+  }
+  state.human.registerExpected = expected;
+  elements.humanQuestionText.textContent = `${left} + ${right} = ?`;
+  elements.humanAnswerInput.value = "";
+  elements.companyWebsiteInput.value = "";
+}
+
+function passesHumanCheck(kind) {
+  if (kind === "reset") {
+    return !elements.forgotCompanyWebsiteInput.value
+      && Number(elements.forgotHumanAnswerInput.value.trim()) === state.human.resetExpected;
+  }
+  return !elements.companyWebsiteInput.value
+    && Number(elements.humanAnswerInput.value.trim()) === state.human.registerExpected;
+}
+
 function passwordChangeInputs() {
   return {
     currentPassword: elements.currentPasswordInput.value,
@@ -644,6 +784,51 @@ async function changePassword() {
     setAccountStatus(authErrorMessage(error, "Change password"));
   } finally {
     updateAccountUi();
+  }
+}
+
+async function sendPasswordResetAfterRecovery() {
+  if (!state.remote.available) {
+    elements.forgotLine.textContent = "Add Firebase config before password reset.";
+    return;
+  }
+
+  const email = normalizedEmail(elements.forgotEmailInput.value);
+  if (!isValidEmail(email)) {
+    elements.forgotLine.textContent = "Enter a valid email first.";
+    return;
+  }
+  if (!passesHumanCheck("reset")) {
+    elements.forgotLine.textContent = "Human check failed. Try the new question.";
+    refreshHumanChallenge("reset");
+    return;
+  }
+
+  const saved = recoveryForEmail(email);
+  if (!saved) {
+    elements.forgotLine.textContent = "No recovery questions are saved in this browser for that email.";
+    return;
+  }
+  if (elements.forgotQuestionOne.value !== saved.questionOne || elements.forgotQuestionTwo.value !== saved.questionTwo) {
+    elements.forgotLine.textContent = "Choose the same recovery questions you saved for this email.";
+    return;
+  }
+
+  const answerOneHash = await recoveryAnswerHash(email, saved.questionOne, elements.forgotAnswerOne.value);
+  const answerTwoHash = await recoveryAnswerHash(email, saved.questionTwo, elements.forgotAnswerTwo.value);
+  if (answerOneHash !== saved.answerOneHash || answerTwoHash !== saved.answerTwoHash) {
+    elements.forgotLine.textContent = "Recovery answers did not match.";
+    refreshHumanChallenge("reset");
+    return;
+  }
+
+  try {
+    await state.remote.auth.sendPasswordResetEmail(email, verificationActionSettings());
+    elements.forgotAnswerOne.value = "";
+    elements.forgotAnswerTwo.value = "";
+    elements.forgotLine.textContent = `Password reset email sent to ${email}. Check spam if it does not arrive in a few minutes.`;
+  } catch (error) {
+    elements.forgotLine.textContent = authErrorMessage(error, "Password reset");
   }
 }
 
@@ -1220,9 +1405,31 @@ function stopStream(stream) {
   stream.getTracks().forEach((track) => track.stop());
 }
 
+function parseDateFilter(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
+  }
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  }
+  const usMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!usMatch) {
+    return null;
+  }
+  const month = Number(usMatch[1]);
+  const day = Number(usMatch[2]);
+  const year = Number(usMatch[3]);
+  const parsed = new Date(year, month - 1, day);
+  if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+    return null;
+  }
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 function filteredClips() {
   const query = state.query.trim().toLowerCase();
-  const today = new Date().toDateString();
 
   return state.clips.filter((clip) => {
     if (state.dateFilter && clip.createdAt.slice(0, 10) !== state.dateFilter) {
@@ -1238,9 +1445,6 @@ function filteredClips() {
       return false;
     }
     if (state.filter === "categorized" && !clip.folder) {
-      return false;
-    }
-    if (state.filter === "today" && new Date(clip.createdAt).toDateString() !== today) {
       return false;
     }
     return !query || searchableText(clip).includes(query);
@@ -1371,10 +1575,19 @@ function setStatus(message) {
 
 function openAccountModal() {
   elements.accountModal.hidden = false;
+  refreshHumanChallenge("register");
 }
 
 function closeAccountModal() {
   elements.accountModal.hidden = true;
+}
+
+function openHelpModal() {
+  elements.helpModal.hidden = false;
+}
+
+function closeHelpModal() {
+  elements.helpModal.hidden = true;
 }
 
 function openTransferModal() {
@@ -1383,6 +1596,22 @@ function openTransferModal() {
 
 function closeTransferModal() {
   elements.transferModal.hidden = true;
+}
+
+function openForgotModal() {
+  elements.forgotEmailInput.value = elements.emailInput.value.trim();
+  const saved = recoveryForEmail(elements.forgotEmailInput.value);
+  if (saved) {
+    elements.forgotQuestionOne.value = saved.questionOne;
+    elements.forgotQuestionTwo.value = saved.questionTwo;
+  }
+  elements.forgotLine.textContent = "Answer your saved questions, pass the human check, then receive a reset email.";
+  refreshHumanChallenge("reset");
+  elements.forgotModal.hidden = false;
+}
+
+function closeForgotModal() {
+  elements.forgotModal.hidden = true;
 }
 
 function defaultClipTitle(clip) {
@@ -1805,13 +2034,26 @@ async function saveImageEditor() {
 }
 
 elements.saveTextButton.addEventListener("click", () => addTextClip(elements.clipInput.value));
+elements.helpOpenButton.addEventListener("click", openHelpModal);
+elements.helpCloseButton.addEventListener("click", closeHelpModal);
 elements.accountOpenButton.addEventListener("click", openAccountModal);
 elements.accountCloseButton.addEventListener("click", closeAccountModal);
 elements.transferOpenButton.addEventListener("click", openTransferModal);
 elements.transferCloseButton.addEventListener("click", closeTransferModal);
+elements.forgotCloseButton.addEventListener("click", closeForgotModal);
+elements.helpModal.addEventListener("click", (event) => {
+  if (event.target === elements.helpModal) {
+    closeHelpModal();
+  }
+});
 elements.accountModal.addEventListener("click", (event) => {
   if (event.target === elements.accountModal) {
     closeAccountModal();
+  }
+});
+elements.forgotModal.addEventListener("click", (event) => {
+  if (event.target === elements.forgotModal) {
+    closeForgotModal();
   }
 });
 elements.transferModal.addEventListener("click", (event) => {
@@ -1858,6 +2100,11 @@ elements.createAccountButton.addEventListener("click", async () => {
     setAccountStatus("Passwords do not match. Re-enter both password fields.");
     return;
   }
+  if (!passesHumanCheck("register")) {
+    setAccountStatus("Human check failed. Try the new question before creating an account.");
+    refreshHumanChallenge("register");
+    return;
+  }
   try {
     const credential = await state.remote.auth.createUserWithEmailAndPassword(email, password);
     elements.confirmPasswordInput.value = "";
@@ -1869,25 +2116,13 @@ elements.createAccountButton.addEventListener("click", async () => {
     }
   } catch (error) {
     setAccountStatus(authErrorMessage(error, "Account creation"));
+  } finally {
+    refreshHumanChallenge("register");
   }
 });
-elements.forgotPasswordButton.addEventListener("click", async () => {
-  if (!state.remote.available) {
-    setAccountStatus("Add Firebase config before password reset.");
-    return;
-  }
-  const email = elements.emailInput.value.trim();
-  if (!isValidEmail(email)) {
-    setAccountStatus("Enter your email first, then use Forgot Password.");
-    return;
-  }
-  try {
-    await state.remote.auth.sendPasswordResetEmail(email, verificationActionSettings());
-    setAccountStatus(`Password reset email sent to ${email}. Check spam if it does not arrive in a few minutes.`);
-  } catch (error) {
-    setAccountStatus(authErrorMessage(error, "Password reset"));
-  }
-});
+elements.forgotPasswordButton.addEventListener("click", openForgotModal);
+elements.saveRecoveryButton.addEventListener("click", saveRecoveryQuestions);
+elements.sendResetButton.addEventListener("click", sendPasswordResetAfterRecovery);
 elements.verifyEmailButton.addEventListener("click", async () => {
   const user = state.remote.auth?.currentUser;
   if (!user) {
@@ -1972,8 +2207,14 @@ elements.searchInput.addEventListener("input", (event) => {
   state.query = event.target.value;
   render();
 });
-elements.dateFilterInput.addEventListener("change", (event) => {
-  state.dateFilter = event.target.value;
+elements.dateFilterInput.addEventListener("input", (event) => {
+  const parsed = parseDateFilter(event.target.value);
+  if (parsed === null) {
+    state.dateFilter = "";
+    setStatus("Use date format MM/DD/YYYY.");
+  } else {
+    state.dateFilter = parsed;
+  }
   render();
 });
 elements.filterSelect.addEventListener("change", (event) => {

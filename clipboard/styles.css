@@ -119,6 +119,7 @@ button:disabled:hover {
 }
 
 #accountOpenButton,
+#helpOpenButton,
 #transferOpenButton {
   border-color: #1d1d1b;
   color: #fff;
@@ -138,6 +139,17 @@ button:disabled:hover {
 #transferOpenButton::before {
   content: "↔";
   margin-right: 8px;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#helpOpenButton {
+  background: #f6f6f1;
+  color: var(--ink);
 }
 
 .shell {
@@ -245,7 +257,7 @@ h2 {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 20px 22px;
+  padding: 16px 18px;
   background: #f6f6f1;
   text-align: left;
 }
@@ -257,13 +269,13 @@ h2 {
 
 .metric-row strong {
   overflow-wrap: anywhere;
-  font-size: clamp(1.5rem, 2.6vw, 2.4rem);
-  line-height: 0.95;
+  font-size: clamp(1.1rem, 1.65vw, 1.7rem);
+  line-height: 1.05;
 }
 
 .metric-row span {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
 }
 
 .workspace {
@@ -336,7 +348,8 @@ textarea {
   color: #87938d;
 }
 
-.auth-form input {
+.auth-form input,
+.auth-form select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -358,6 +371,24 @@ textarea {
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.45;
+}
+
+.human-check {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: #f8f8f3;
+}
+
+.bot-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .classification-field {
@@ -769,15 +800,58 @@ button[hidden] {
   padding-bottom: 18px;
 }
 
-.transfer-modal-panel {
+.transfer-modal-panel,
+.forgot-modal-panel {
   width: min(520px, 100%);
   grid-template-rows: auto auto;
 }
 
+.help-modal-panel {
+  width: min(760px, 100%);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .account-modal-panel .auth-form,
 .account-modal-panel .account-settings,
-.account-modal-panel .account-line {
+.account-modal-panel .account-line,
+.forgot-modal-panel .forgot-form,
+.help-modal-panel .help-content {
   margin-inline: 18px;
+}
+
+.forgot-form,
+.help-content {
+  margin-block: 18px;
+}
+
+.recovery-setup {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.help-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  overflow: auto;
+}
+
+.help-content section {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: #f8f8f3;
+}
+
+.help-content h3 {
+  margin: 0 0 6px;
+}
+
+.help-content p {
+  margin-bottom: 6px;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .modal-head {
@@ -916,6 +990,14 @@ button[hidden] {
     width: 100%;
   }
 
+  .top-actions {
+    width: 100%;
+  }
+
+  .top-actions button {
+    flex: 1;
+  }
+
   .title-sub {
     flex-basis: 100%;
     margin-left: 44px;
@@ -946,5 +1028,9 @@ button[hidden] {
   .editor-toolbar,
   .canvas-wrap {
     padding: 12px;
+  }
+
+  .help-content {
+    grid-template-columns: 1fr;
   }
 }
