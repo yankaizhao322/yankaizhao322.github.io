@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pixel Character Generator | Yankai Zhao</title>
+  <meta name="description" content="A desert-botanical inspired front-end showcase for a conditional DCGAN pixel-style character generator.">
+  <meta property="og:title" content="Pixel Character Generator">
+  <meta property="og:description" content="Generate and browse 16x16 pixel-style monsters, humans, items, and equipment.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yankaizhao322.github.io/pixel-generator/">
+  <link rel="canonical" href="https://yankaizhao322.github.io/pixel-generator/">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="site-header" aria-label="Site header">
+    <a class="brand" href="./" aria-label="Pixel Character Generator home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Pixel Character Generator</span>
+    </a>
+    <nav class="nav" aria-label="Page">
+      <a href="#gallery">Gallery</a>
+      <a href="#studio">Studio</a>
+      <a href="#process">Process</a>
+      <a href="https://github.com/yankaizhao322/Pixel_Style_Character_Generator">Source</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Conditional DCGAN sprite study</p>
+        <h1>Pixel spirits from a quiet desert machine.</h1>
+        <p class="lead">
+          A front-end home for a 16x16 character generator trained to sketch monsters,
+          humans, items, and equipment. The interface borrows a desert-botanical mood:
+          warm paper, sage lines, copper accents, and a slow gallery rhythm.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="#studio">Open static studio</a>
+          <a class="button" href="https://pixel-style-character-generator.streamlit.app/">Live model</a>
+        </div>
+      </div>
+
+      <div class="hero-panel" aria-label="Generated pixel character preview">
+        <div class="panel-top">
+          <span>seed archive</span>
+          <span>16 x 16</span>
+        </div>
+        <div class="showcase-grid" aria-hidden="true">
+          <img src="./assets/gallery/monster-01.png" alt="">
+          <img src="./assets/gallery/human-01.png" alt="">
+          <img src="./assets/gallery/item-01.png" alt="">
+          <img src="./assets/gallery/equipment-01.png" alt="">
+          <img src="./assets/gallery/monster-02.png" alt="">
+          <img src="./assets/gallery/human-02.png" alt="">
+          <img src="./assets/gallery/item-02.png" alt="">
+          <img src="./assets/gallery/equipment-02.png" alt="">
+          <img src="./assets/gallery/monster-03.png" alt="">
+        </div>
+        <div class="panel-note">
+          <strong>Four conditioned classes</strong>
+          <span>monster, human, item, equipment</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="intro-band" aria-label="Project details">
+      <div>
+        <span class="number">04</span>
+        <p>conditioned output classes</p>
+      </div>
+      <div>
+        <span class="number">16</span>
+        <p>pixel canvas width and height</p>
+      </div>
+      <div>
+        <span class="number">800</span>
+        <p>training epochs in the source project</p>
+      </div>
+    </section>
+
+    <section class="section story" id="gallery">
+      <div class="section-heading">
+        <p class="eyebrow">Gallery</p>
+        <h2>Small artifacts, arranged like field notes.</h2>
+      </div>
+      <div class="masonry" aria-label="Generated sprite gallery">
+        <figure>
+          <img src="./assets/gallery/monster-01.png" alt="Generated monster sprite">
+          <figcaption>monster / seed pass</figcaption>
+        </figure>
+        <figure class="tall">
+          <img src="./assets/gallery/human-01.png" alt="Generated human sprite">
+          <figcaption>human / portrait shard</figcaption>
+        </figure>
+        <figure>
+          <img src="./assets/gallery/item-01.png" alt="Generated item sprite">
+          <figcaption>item / tiny relic</figcaption>
+        </figure>
+        <figure>
+          <img src="./assets/gallery/equipment-01.png" alt="Generated equipment sprite">
+          <figcaption>equipment / loadout mark</figcaption>
+        </figure>
+        <figure class="wide">
+          <img src="./assets/gallery/monster-02.png" alt="Generated monster sprite">
+          <figcaption>monster / warm palette</figcaption>
+        </figure>
+        <figure>
+          <img src="./assets/gallery/human-02.png" alt="Generated human sprite">
+          <figcaption>human / compact silhouette</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section studio" id="studio">
+      <div class="section-heading">
+        <p class="eyebrow">Static Studio</p>
+        <h2>Preview the interface without running Python.</h2>
+        <p>
+          GitHub Pages cannot execute the PyTorch model, so this page uses saved samples for
+          a front-end preview. The live model button remains available when you want real inference.
+        </p>
+      </div>
+
+      <div class="studio-shell">
+        <div class="controls" aria-label="Preview controls">
+          <label for="class-select">Class</label>
+          <select id="class-select">
+            <option value="monster">Monster</option>
+            <option value="human">Human</option>
+            <option value="item">Item</option>
+            <option value="equipment">Equipment</option>
+          </select>
+
+          <label for="seed-input">Seed note</label>
+          <input id="seed-input" type="text" value="desert-128" aria-describedby="seed-help">
+          <small id="seed-help">Changes the local sample pick on this static page.</small>
+
+          <button class="button primary" id="generate-button" type="button">Generate preview</button>
+          <a class="button" href="https://pixel-style-character-generator.streamlit.app/">Run live model</a>
+        </div>
+
+        <div class="preview-card" aria-live="polite">
+          <div class="preview-stage">
+            <img id="preview-image" src="./assets/gallery/monster-01.png" alt="Selected pixel preview">
+          </div>
+          <div>
+            <p class="preview-label" id="preview-label">monster / desert-128</p>
+            <p class="preview-copy">
+              The live Streamlit app loads the trained generator. This static surface is for
+              presentation, gallery browsing, and a polished public URL.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section process" id="process">
+      <div class="section-heading">
+        <p class="eyebrow">Process</p>
+        <h2>From latent noise to a usable sprite direction.</h2>
+      </div>
+      <div class="timeline">
+        <article>
+          <span>01</span>
+          <h3>Choose a class</h3>
+          <p>Condition the generator on one of four game-oriented categories.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Sample a latent vector</h3>
+          <p>A seed makes the draw repeatable when a specific result is worth revisiting.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Render nearest-neighbor scale</h3>
+          <p>The output stays crisp by enlarging each generated pixel as a deliberate block.</p>
+        </article>
+        <article>
+          <span>04</span>
+          <h3>Collect feedback</h3>
+          <p>The deployed model can send comments to a Google Sheet through Streamlit secrets.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Yankai Zhao</span>
+    <a href="https://github.com/yankaizhao322/Pixel_Style_Character_Generator">GitHub repository</a>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
