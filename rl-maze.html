@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RL Maze Solver — Yankai Zhao</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper:       #f7f3ec;
+      --paper2:      #efe9de;
+      --ink:         #1a1714;
+      --ink2:        #3d3830;
+      --muted:       #7d7368;
+      --rule:        #ccc5b8;
+      --rule-dark:   #7d7368;
+      --accent:      #b84c0a;
+      --accent-lt:   #fdf3ec;
+      --green:       #15803d;
+      --blue:        #1d4ed8;
+      --red:         #dc2626;
+      --orange:      #ea580c;
+      --hfont:       'Playfair Display', Georgia, serif;
+      --ufont:       'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--ufont);
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--paper);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    .navbar {
+      border-bottom: 1px solid var(--ink);
+      border-top: 3px solid var(--ink);
+    }
+
+    .navbar-inner {
+      width: min(1200px, calc(100vw - 48px));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      height: 42px;
+    }
+
+    .nav-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 42px;
+      padding: 0 16px 0 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      border-right: 1px solid var(--rule);
+      transition: color 120ms;
+    }
+
+    .nav-back:hover { color: var(--accent); }
+
+    .nav-title {
+      padding: 0 16px;
+      font-family: var(--hfont);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .nav-tag {
+      margin-left: auto;
+      padding: 0 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border-left: 1px solid var(--rule);
+      height: 42px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ── Page layout ── */
+    .page {
+      width: min(1200px, calc(100vw - 48px));
+      margin: 0 auto;
+      padding: 28px 0 64px;
+    }
+
+    .page-header {
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--ink);
+      margin-bottom: 24px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-family: var(--hfont);
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    h1 em { font-style: italic; color: var(--accent); }
+
+    .page-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 680px;
+    }
+
+    /* ── Main workspace ── */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 12px;
+      border: 1px solid var(--ink);
+    }
+
+    .toolbar-group {
+      display: flex;
+      border-right: 1px solid var(--rule);
+    }
+
+    .toolbar-group:last-child { border-right: none; }
+
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      height: 34px;
+      padding: 0 12px;
+      font-family: var(--ufont);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      background: transparent;
+      border: none;
+      border-right: 1px solid var(--rule);
+      cursor: pointer;
+      transition: background 120ms, color 120ms;
+      white-space: nowrap;
+    }
+
+    .tool-btn:last-child { border-right: none; }
+    .tool-btn:hover { background: var(--paper2); }
+    .tool-btn.active { background: var(--ink); color: var(--paper); }
+    .tool-btn.accent { color: var(--accent); }
+    .tool-btn.accent:hover { background: var(--accent); color: var(--paper); }
+
+    .tool-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Canvas wrapper ── */
+    .canvas-wrap {
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      display: inline-block;
+      line-height: 0;
+      cursor: crosshair;
+      user-select: none;
+    }
+
+    #maze-canvas { display: block; }
+
+    /* ── Sidebar ── */
+    .sidebar { display: flex; flex-direction: column; gap: 0; }
+
+    .panel {
+      border: 1px solid var(--rule);
+      border-bottom: none;
+    }
+
+    .panel:last-child { border-bottom: 1px solid var(--rule); }
+
+    .panel-head {
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--rule);
+      background: var(--paper2);
+    }
+
+    .panel-body { padding: 12px; }
+
+    /* Run button */
+    #run-btn {
+      width: 100%;
+      height: 42px;
+      font-family: var(--hfont);
+      font-size: 17px;
+      font-weight: 700;
+      font-style: italic;
+      color: var(--paper);
+      background: var(--ink);
+      border: none;
+      cursor: pointer;
+      transition: background 140ms;
+      letter-spacing: 0;
+      margin-bottom: 12px;
+    }
+
+    #run-btn:hover { background: var(--accent); }
+    #run-btn:disabled { background: var(--muted); cursor: not-allowed; }
+
+    /* Speed slider */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .slider-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+
+    /* Status */
+    #status-box {
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ink2);
+      border-top: 2px solid var(--ink);
+      background: var(--paper);
+      min-height: 60px;
+    }
+
+    #status-box.solved { border-top-color: var(--green); color: var(--green); }
+    #status-box.no-path { border-top-color: var(--orange); color: var(--orange); }
+    #status-box.running { border-top-color: var(--blue); color: var(--blue); }
+
+    /* Stats */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--rule);
+      font-size: 12px;
+    }
+
+    .stat-row:last-child { border-bottom: none; }
+    .stat-key { color: var(--muted); }
+    .stat-val { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+    /* Legend */
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 12px;
+      color: var(--ink2);
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border: 1px solid rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+
+    /* Size selector */
+    .size-select {
+      height: 34px;
+      padding: 0 8px;
+      font-family: var(--ufont);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Algorithm note */
+    .algo-note {
+      margin-top: 20px;
+      padding: 14px;
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      background: var(--accent-lt);
+    }
+
+    .algo-note p {
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--ink2);
+      margin-bottom: 6px;
+    }
+
+    .algo-note p:last-child { margin-bottom: 0; }
+    .algo-note strong { color: var(--ink); }
+    .algo-note code {
+      font-size: 11.5px;
+      background: rgba(0,0,0,0.06);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    @media (max-width: 860px) {
+      .workspace { grid-template-columns: 1fr; }
+      .sidebar { flex-direction: row; flex-wrap: wrap; }
+      .panel { min-width: 200px; flex: 1; }
+    }
+
+    @media (max-width: 520px) {
+      .page { width: calc(100vw - 24px); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-inner">
+    <a class="nav-back" href="./index.html">← Portfolio</a>
+    <span class="nav-title">RL Maze Solver</span>
+    <span class="nav-tag">Value Iteration · MDP</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="page-header">
+    <span class="section-label">Reinforcement Learning · ECE 440</span>
+    <h1>Maze Agent — <em>Value Iteration</em></h1>
+    <p class="page-desc">
+      Draw a maze, place walls, then run the agent. The solver uses <strong>Value Iteration</strong> (Markov Decision Process)
+      to compute the optimal policy — identical to the algorithm in my ECE 440 project.
+      If no exit exists, it shows the best path the agent could find.
+    </p>
+  </div>
+
+  <div class="workspace">
+
+    <!-- Left: canvas editor -->
+    <div>
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button class="tool-btn active" id="tool-wall" onclick="setTool('wall')">
+            <span class="tool-dot" style="background:#1a1714"></span> Wall
+          </button>
+          <button class="tool-btn" id="tool-erase" onclick="setTool('erase')">
+            <span class="tool-dot" style="background:#f7f3ec; border:1px solid #ccc5b8"></span> Erase
+          </button>
+          <button class="tool-btn" id="tool-start" onclick="setTool('start')">
+            <span class="tool-dot" style="background:#15803d"></span> Start
+          </button>
+          <button class="tool-btn" id="tool-end" onclick="setTool('end')">
+            <span class="tool-dot" style="background:#1d4ed8"></span> Goal
+          </button>
+        </div>
+        <div class="toolbar-group">
+          <button class="tool-btn accent" onclick="generateMaze()">⟳ Generate</button>
+          <button class="tool-btn" onclick="clearMaze()">✕ Clear</button>
+        </div>
+        <div class="toolbar-group">
+          <select class="size-select" id="size-sel" onchange="resizeGrid()">
+            <option value="11">11 × 11</option>
+            <option value="15">15 × 15</option>
+            <option value="21" selected>21 × 21</option>
+            <option value="25">25 × 25</option>
+            <option value="31">31 × 31</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="maze-canvas"></canvas>
+      </div>
+
+      <div class="algo-note">
+        <p><strong>Algorithm:</strong> Value Iteration on a deterministic MDP.
+        Rewards: <code>+100</code> at goal, <code>−0.1</code> per step, <code>−5</code> for hitting a wall.
+        Discount factor γ = 0.99. Converges when max Δ &lt; 10⁻⁶.</p>
+        <p><strong>No exit:</strong> If the agent loops or gets stuck, it traces the longest non-repeating path
+        it could follow and reports the best value it achieved.</p>
+      </div>
+    </div>
+
+    <!-- Right: sidebar -->
+    <div class="sidebar">
+
+      <div id="status-box">
+        Draw walls, then click <em>Run Agent</em>.
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Controls</div>
+        <div class="panel-body">
+          <button id="run-btn" onclick="runAgent()">Run Agent</button>
+          <div class="slider-row">
+            <span class="slider-label">Speed</span>
+            <input type="range" id="speed" min="1" max="10" value="5">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Statistics</div>
+        <div class="panel-body">
+          <div class="stat-row"><span class="stat-key">Grid size</span><span class="stat-val" id="stat-size">21 × 21</span></div>
+          <div class="stat-row"><span class="stat-key">Open cells</span><span class="stat-val" id="stat-states">—</span></div>
+          <div class="stat-row"><span class="stat-key">VI iterations</span><span class="stat-val" id="stat-iters">—</span></div>
+          <div class="stat-row"><span class="stat-key">Path length</span><span class="stat-val" id="stat-path">—</span></div>
+          <div class="stat-row"><span class="stat-key">Solved</span><span class="stat-val" id="stat-solved">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Legend</div>
+        <div class="panel-body">
+          <div class="legend-row"><div class="legend-swatch" style="background:#1a1714"></div>Wall</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#f7f3ec"></div>Open path</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#15803d"></div>Start</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#1d4ed8"></div>Goal</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#dc2626"></div>Optimal path</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#ea580c; opacity:0.7"></div>Best effort (no exit)</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Source</div>
+        <div class="panel-body">
+          <a href="https://github.com/yankaizhao322/Reinforcement-Learning-Maze"
+             style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:underline;"
+             target="_blank" rel="noopener">
+            View notebook on GitHub →
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────────────────────────
+let grid = [];          // 2D array: 0=wall, 1=open
+let startCell = null;   // [row, col]
+let endCell   = null;
+let currentTool = 'wall';
+let isMouseDown = false;
+let currentPath = null;
+let isSolved    = false;
+let animFrame   = null;
+let animIndex   = 0;
+
+const CELL = 22; // px per cell
+const GAMMA = 0.99;
+const EPS   = 1e-6;
+const MAX_ITER = 5000;
+const ACTIONS = [[-1,0],[1,0],[0,-1],[0,1]];
+
+// ─────────────────────────────────────────────────────────────────
+//  Init
+// ─────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  initGrid(21);
+  generateMaze();
+  updateStats();
+});
+
+function initGrid(size) {
+  grid = Array.from({length: size}, () => new Array(size).fill(0));
+  startCell = null;
+  endCell   = null;
+  currentPath = null;
+  clearAnim();
+  setStatus('idle');
+  resetStats();
+  setupCanvas(size);
+}
+
+function setupCanvas(size) {
+  const canvas = document.getElementById('maze-canvas');
+  canvas.width  = size * CELL;
+  canvas.height = size * CELL;
+  attachCanvasEvents(canvas);
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Maze generator — recursive backtracking
+// ─────────────────────────────────────────────────────────────────
+function generateMaze() {
+  clearAnim();
+  currentPath = null;
+
+  const sel  = document.getElementById('size-sel');
+  const size = parseInt(sel.value); // must be odd
+
+  grid = Array.from({length: size}, () => new Array(size).fill(0));
+
+  function carve(r, c) {
+    grid[r][c] = 1;
+    const dirs = shuffle([[-2,0],[2,0],[0,-2],[0,2]]);
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr, nc = c + dc;
+      if (nr > 0 && nr < size && nc > 0 && nc < size && grid[nr][nc] === 0) {
+        grid[r + dr/2][c + dc/2] = 1;
+        carve(nr, nc);
+      }
+    }
+  }
+
+  carve(1, 1);
+
+  // Ensure start/end are open
+  grid[1][1] = 1;
+  grid[size-2][size-2] = 1;
+  startCell = [1, 1];
+  endCell   = [size - 2, size - 2];
+
+  setupCanvas(size);
+  render();
+  updateStats();
+  setStatus('idle');
+  resetStats();
+  document.getElementById('stat-size').textContent = `${size} × ${size}`;
+}
+
+function clearMaze() {
+  clearAnim();
+  const size = grid.length;
+  grid = Array.from({length: size}, () => new Array(size).fill(1));
+  startCell = [0, 0];
+  endCell   = [size-1, size-1];
+  currentPath = null;
+  render();
+  updateStats();
+  setStatus('idle');
+  resetStats();
+}
+
+function resizeGrid() {
+  generateMaze();
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Canvas events
+// ─────────────────────────────────────────────────────────────────
+function attachCanvasEvents(canvas) {
+  const getCell = e => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const cx = e.clientX ?? e.touches?.[0]?.clientX;
+    const cy = e.clientY ?? e.touches?.[0]?.clientY;
+    const c = Math.floor((cx - rect.left) * scaleX / CELL);
+    const r = Math.floor((cy - rect.top)  * scaleY / CELL);
+    return [r, c];
+  };
+
+  const apply = e => {
+    const [r, c] = getCell(e);
+    if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length) return;
+
+    if (currentTool === 'start') {
+      startCell = [r, c];
+      grid[r][c] = 1;
+    } else if (currentTool === 'end') {
+      endCell = [r, c];
+      grid[r][c] = 1;
+    } else if (currentTool === 'wall') {
+      if (!isSameCell([r,c], startCell) && !isSameCell([r,c], endCell))
+        grid[r][c] = 0;
+    } else if (currentTool === 'erase') {
+      grid[r][c] = 1;
+    }
+
+    currentPath = null;
+    render();
+    updateStats();
+  };
+
+  canvas.addEventListener('mousedown',  e => { isMouseDown = true;  apply(e); });
+  canvas.addEventListener('mousemove',  e => { if (isMouseDown) apply(e); });
+  canvas.addEventListener('mouseup',    () => isMouseDown = false);
+  canvas.addEventListener('mouseleave', () => isMouseDown = false);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); apply(e); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); apply(e); }, {passive:false});
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Render
+// ─────────────────────────────────────────────────────────────────
+function render(pathUpTo) {
+  const canvas = document.getElementById('maze-canvas');
+  const ctx    = canvas.getContext('2d');
+  const rows   = grid.length;
+  const cols   = grid[0].length;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Cells
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = c * CELL, y = r * CELL;
+
+      if (isSameCell([r,c], startCell)) {
+        ctx.fillStyle = '#15803d';
+      } else if (isSameCell([r,c], endCell)) {
+        ctx.fillStyle = '#1d4ed8';
+      } else if (grid[r][c] === 0) {
+        ctx.fillStyle = '#1a1714';
+      } else {
+        ctx.fillStyle = '#f7f3ec';
+      }
+      ctx.fillRect(x, y, CELL, CELL);
+
+      // Grid line on open cells only
+      if (grid[r][c] === 1) {
+        ctx.strokeStyle = 'rgba(204,197,184,0.4)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x, y, CELL, CELL);
+      }
+    }
+  }
+
+  // Path
+  if (currentPath && currentPath.length > 1) {
+    const pts = pathUpTo !== undefined ? currentPath.slice(0, pathUpTo + 1) : currentPath;
+    const color = isSolved ? '#dc2626' : '#ea580c';
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = CELL < 20 ? 2 : 2.5;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.globalAlpha = 0.9;
+
+    if (!isSolved) ctx.setLineDash([3, 3]);
+
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      const [pr, pc] = pts[i];
+      const x = pc * CELL + CELL / 2;
+      const y = pr * CELL + CELL / 2;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Agent dot
+    if (pts.length > 0) {
+      const [lr, lc] = pts[pts.length - 1];
+      ctx.fillStyle   = color;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(lc * CELL + CELL/2, lr * CELL + CELL/2, CELL/2 - 2, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Value Iteration
+// ─────────────────────────────────────────────────────────────────
+function runAgent() {
+  clearAnim();
+  currentPath = null;
+  render();
+
+  // Validate
+  if (!startCell || !endCell) {
+    setStatus('error', 'Set a start (green) and goal (blue) first.');
+    return;
+  }
+  if (!grid[startCell[0]][startCell[1]] || !grid[endCell[0]][endCell[1]]) {
+    setStatus('error', 'Start or goal is on a wall — place them on open cells.');
+    return;
+  }
+  if (isSameCell(startCell, endCell)) {
+    setStatus('error', 'Start and goal cannot be the same cell.');
+    return;
+  }
+
+  setStatus('running', 'Running Value Iteration…');
+  document.getElementById('run-btn').disabled = true;
+
+  // Run asynchronously so the UI updates first
+  setTimeout(() => {
+    const t0 = performance.now();
+
+    // Build states
+    const rows = grid.length, cols = grid[0].length;
+    const stateSet = new Set();
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        if (grid[r][c] === 1) stateSet.add(key(r, c));
+
+    const isOpen = (r, c) =>
+      r >= 0 && r < rows && c >= 0 && c < cols && grid[r][c] === 1;
+
+    const nextState = (r, c, a) => {
+      const nr = r + a[0], nc = c + a[1];
+      return isOpen(nr, nc) ? [nr, nc] : [r, c];
+    };
+
+    const getReward = (r, c, nr, nc) => {
+      if (nr === endCell[0] && nc === endCell[1]) return 100;
+      if (nr === r && nc === c) return -5;
+      return -0.1;
+    };
+
+    // Value map
+    const V = new Map();
+    for (const k of stateSet) V.set(k, 0);
+
+    let iters = 0;
+    for (let it = 0; it < MAX_ITER; it++) {
+      let delta = 0;
+      const newV = new Map(V);
+
+      for (const k of stateSet) {
+        const [r, c] = fromKey(k);
+        if (r === endCell[0] && c === endCell[1]) continue;
+
+        let best = -Infinity;
+        for (const a of ACTIONS) {
+          const [nr, nc] = nextState(r, c, a);
+          const q = getReward(r, c, nr, nc) + GAMMA * (V.get(key(nr, nc)) ?? 0);
+          if (q > best) best = q;
+        }
+        delta = Math.max(delta, Math.abs(best - (V.get(k) ?? 0)));
+        newV.set(k, best);
+      }
+
+      for (const [k, v] of newV) V.set(k, v);
+      iters++;
+      if (delta < EPS) break;
+    }
+
+    const elapsed = performance.now() - t0;
+
+    // Extract policy
+    const policy = new Map();
+    for (const k of stateSet) {
+      const [r, c] = fromKey(k);
+      if (r === endCell[0] && c === endCell[1]) continue;
+      let bestQ = -Infinity, bestA = null;
+      for (const a of ACTIONS) {
+        const [nr, nc] = nextState(r, c, a);
+        const q = getReward(r, c, nr, nc) + GAMMA * (V.get(key(nr, nc)) ?? 0);
+        if (q > bestQ) { bestQ = q; bestA = a; }
+      }
+      policy.set(k, bestA);
+    }
+
+    // Generate path
+    const maxSteps = stateSet.size * 5;
+    const path = [startCell.slice()];
+    let state = startCell.slice();
+    const visited = new Set();
+    let solved = false;
+
+    for (let i = 0; i < maxSteps; i++) {
+      if (state[0] === endCell[0] && state[1] === endCell[1]) {
+        solved = true;
+        break;
+      }
+      const k = key(state[0], state[1]);
+      if (visited.has(k)) break;
+      visited.add(k);
+
+      const a = policy.get(k);
+      if (!a) break;
+      const [nr, nc] = nextState(state[0], state[1], a);
+      if (nr === state[0] && nc === state[1]) break; // stuck on wall
+      state = [nr, nc];
+      path.push(state.slice());
+    }
+
+    // Update state & animate
+    currentPath = path;
+    isSolved    = solved;
+
+    document.getElementById('stat-iters').textContent  = iters;
+    document.getElementById('stat-path').textContent   = path.length;
+    document.getElementById('stat-states').textContent = stateSet.size;
+    document.getElementById('stat-solved').textContent = solved ? '✓ Yes' : '✗ No exit';
+
+    if (solved) {
+      setStatus('solved', `Solved in ${path.length} steps · VI converged in ${iters} iterations · ${elapsed.toFixed(0)} ms`);
+    } else {
+      setStatus('no-path', `No exit found — showing best effort path (${path.length} steps) · VI ran ${iters} iterations`);
+    }
+
+    animatePath();
+    document.getElementById('run-btn').disabled = false;
+  }, 30);
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Animation
+// ─────────────────────────────────────────────────────────────────
+function animatePath() {
+  clearAnim();
+  if (!currentPath || currentPath.length === 0) return;
+
+  animIndex = 0;
+  const speedVal = parseInt(document.getElementById('speed').value);
+  const delay = Math.round(280 / speedVal); // ms per step
+
+  let lastTime = 0;
+  function step(ts) {
+    if (ts - lastTime >= delay) {
+      render(animIndex);
+      animIndex++;
+      lastTime = ts;
+    }
+    if (animIndex < currentPath.length) {
+      animFrame = requestAnimationFrame(step);
+    } else {
+      render(); // full path
+    }
+  }
+  animFrame = requestAnimationFrame(step);
+}
+
+function clearAnim() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  animFrame = null;
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Helpers
+// ─────────────────────────────────────────────────────────────────
+function setTool(t) {
+  currentTool = t;
+  ['wall','erase','start','end'].forEach(id => {
+    document.getElementById('tool-' + id)?.classList.toggle('active', id === t);
+  });
+}
+
+function setStatus(type, msg) {
+  const box = document.getElementById('status-box');
+  box.className = type === 'idle' ? '' : type;
+  box.textContent = msg ?? {
+    idle:    'Draw walls, then click Run Agent.',
+    running: 'Running…',
+  }[type] ?? '';
+}
+
+function resetStats() {
+  ['stat-iters','stat-path','stat-solved'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+}
+
+function updateStats() {
+  const size = grid.length;
+  let open = 0;
+  for (const row of grid) for (const c of row) if (c === 1) open++;
+  document.getElementById('stat-size').textContent   = `${size} × ${size}`;
+  document.getElementById('stat-states').textContent = open;
+}
+
+const key     = (r, c)  => `${r},${c}`;
+const fromKey = k       => k.split(',').map(Number);
+const isSameCell = (a, b) => a && b && a[0] === b[0] && a[1] === b[1];
+const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+</script>
+</body>
+</html>
