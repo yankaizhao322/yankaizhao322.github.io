@@ -133,33 +133,71 @@
       color: var(--paper);
     }
 
-/* ── Tool dock (inline in navbar) ── */
+    /* ── Floating tool dock ── */
     .tool-dock {
-      display: flex;
-      flex-direction: row;
-      gap: 0;
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      z-index: 20;
+      width: 228px;
+      padding: 14px;
+      border: 1px solid rgba(26, 23, 20, 0.18);
+      background: rgba(253, 243, 236, 0.97);
+      box-shadow: 0 18px 42px rgba(26, 23, 20, 0.18);
+      transform: translateY(-50%);
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
     }
 
-    .tool-dock-label { display: none; }
+    .tool-dock:hover,
+    .tool-dock:focus-within {
+      transform: translateY(-50%) translateX(-4px);
+      background: #fff8f3;
+      box-shadow: 0 24px 56px rgba(26, 23, 20, 0.24);
+    }
+
+    .tool-dock-label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--accent);
+      font-family: var(--ui-font);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.35;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
 
     .tool-dock a {
       display: flex;
       align-items: center;
-      padding: 0 14px;
-      height: 42px;
-      color: var(--ink2);
+      justify-content: space-between;
+      min-height: 40px;
+      margin-top: 8px;
+      padding: 0 12px;
+      color: var(--paper);
+      background: var(--ink);
       font-family: var(--ui-font);
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       text-decoration: none;
-      border-left: 1px solid var(--rule);
       white-space: nowrap;
-      transition: background 120ms, color 120ms;
+      transition: background 120ms, color 120ms, transform 120ms;
     }
 
-    .tool-dock a:hover { background: var(--accent); color: var(--paper); }
+    .tool-dock a::after {
+      content: "GO";
+      color: var(--accent-light);
+      font-size: 10px;
+    }
+
+    .tool-dock a:hover,
+    .tool-dock a:focus-visible {
+      background: var(--accent);
+      color: var(--paper);
+      transform: translateX(-2px);
+    }
 
     /* ── Page wrapper ── */
     .site {
@@ -482,7 +520,18 @@
       .intro { grid-template-columns: 1fr; gap: 24px; align-items: start; }
       .intro-copy { border-left: none; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 24px; }
       .portrait { width: min(280px, 100%); height: auto; aspect-ratio: 4/5; }
-      .tool-dock { display: none; }
+      .tool-dock {
+        top: auto;
+        right: 16px;
+        bottom: 16px;
+        width: min(228px, calc(100vw - 32px));
+        transform: none;
+      }
+
+      .tool-dock:hover,
+      .tool-dock:focus-within {
+        transform: translateY(-2px);
+      }
       .grid { grid-template-columns: repeat(2, 1fr); }
     }
 
@@ -505,14 +554,15 @@
         <a href="#projects">Projects</a>
         <a href="#contact">Contact</a>
       </nav>
-      <aside class="tool-dock" aria-label="Tools">
-        <span class="tool-dock-label">Tools</span>
-        <a href="https://yankaizhao322.github.io/clipboard/">Clipboard</a>
-        <a href="https://yankaizhao322.github.io/Easy-Input-Tool/">Easy Input</a>
-        <a href="https://yankaizhao322.github.io/pixel-generator/">Pixel Generator</a>
-      </aside>
     </div>
   </div>
+
+  <aside class="tool-dock" aria-label="Try my tools">
+    <span class="tool-dock-label">Try my tools</span>
+    <a href="https://yankaizhao322.github.io/clipboard/">Clipboard</a>
+    <a href="https://yankaizhao322.github.io/Easy-Input-Tool/">Easy Input</a>
+    <a href="https://yankaizhao322.github.io/pixel-generator/">Pixel Generator</a>
+  </aside>
 
   <main class="site">
 
